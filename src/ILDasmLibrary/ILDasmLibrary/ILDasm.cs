@@ -12,21 +12,27 @@ namespace ILDasmLibrary
 {
     public class ILDasm
     {
-
+        public ILDasmAssembly Assembly; 
         public ILDasm(Stream fileStream)
         {
             Readers.PeReader = new PEReader(fileStream);
+            BuildAssembly();
         }
 
         public ILDasm(string path)
-            :this(File.OpenRead(path))
+            : this(File.OpenRead(path))
         {   
+        }
+
+        private void BuildAssembly()
+        {
+            AssemblyDefinition assemblyDef = Readers.MdReader.GetAssemblyDefinition();
+            Assembly = new ILDasmAssembly(assemblyDef);
         }
     }
 
     internal static class Readers{
         private static PEReader _peReader;
-        private static MetadataReader _mdReader;
         
         public static PEReader PeReader {
             get
