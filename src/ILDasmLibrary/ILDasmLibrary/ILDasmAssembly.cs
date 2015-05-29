@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using System.Diagnostics;
 
 namespace ILDasmLibrary
 {
@@ -60,10 +61,19 @@ namespace ILDasmLibrary
             }
         }
 
+        public string Flags
+        {
+            get
+            {
+                if (_assemblyDefinition.Flags.HasFlag(System.Reflection.AssemblyFlags.Retargetable)) return "retargetable";
+                return string.Empty;
+            }
+        }
+
         private string GetPublicKey()
         {
             var bytes = Readers.MdReader.GetBlobBytes(_assemblyDefinition.PublicKey);
-            if (bytes.Length == 0) return String.Empty;
+            if (bytes.Length == 0) return string.Empty;
             StringBuilder sb = new StringBuilder();
             sb.Append("(");
             foreach (byte _byte in bytes)
