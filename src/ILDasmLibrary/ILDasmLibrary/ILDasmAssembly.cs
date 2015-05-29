@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Diagnostics;
+using System.Collections.ObjectModel;
 
 namespace ILDasmLibrary
 {
@@ -13,6 +14,7 @@ namespace ILDasmLibrary
     {
         private AssemblyDefinition _assemblyDefinition;
         private string _publicKey;
+        private Collection<ILDasmTypeDefinition> _typeDefinitions;
 
         internal ILDasmAssembly(AssemblyDefinition assemblyDef)
         {
@@ -67,6 +69,30 @@ namespace ILDasmLibrary
             {
                 if (_assemblyDefinition.Flags.HasFlag(System.Reflection.AssemblyFlags.Retargetable)) return "retargetable";
                 return string.Empty;
+            }
+        }
+
+        public Collection<ILDasmTypeDefinition> TypeDefinitions
+        {
+            get
+            {
+                if (_typeDefinitions == null) GetTypeDefinitions();
+                return _typeDefinitions;
+            }
+        }
+
+        private void GetTypeDefinitions()
+        {
+            var handles = Readers.MdReader.TypeDefinitions;
+            _typeDefinitions = new Collection<ILDasmTypeDefinition>();
+            foreach(var handle in handles)
+            {
+                if (handle.IsNil)
+                {
+                    continue;
+                }
+                var typeDefinition = Readers.MdReader.GetTypeDefinition(handle);
+                _typeDefinitions.Add(new ILDasmTypeDefinition(typeDefinition));
             }
         }
 
