@@ -15,10 +15,15 @@ namespace ILDasmLibrary
         private AssemblyDefinition _assemblyDefinition;
         private string _publicKey;
         private ICollection<ILDasmTypeDefinition> _typeDefinitions;
+        private string _name;
+        private string _culture;
+        private int _hashAlgorithm;
+        private Version _version;
 
         internal ILDasmAssembly(AssemblyDefinition assemblyDef, Readers readers) 
             : base(readers)
         {
+            _hashAlgorithm = -1;
             _assemblyDefinition = assemblyDef;
         }
 
@@ -26,7 +31,11 @@ namespace ILDasmLibrary
         {
             get
             {
-                return _readers.MdReader.GetString(_assemblyDefinition.Name);
+                if(_name == null)
+                {
+                    _name = _readers.MdReader.GetString(_assemblyDefinition.Name);
+                }
+                return _name;
             }
         }
 
@@ -34,7 +43,11 @@ namespace ILDasmLibrary
         {
             get
             {
-                return _readers.MdReader.GetString(_assemblyDefinition.Culture);
+                if(_culture == null)
+                {
+                    _culture = _readers.MdReader.GetString(_assemblyDefinition.Culture);
+                }
+                return _culture;
             }
         }
 
@@ -42,7 +55,11 @@ namespace ILDasmLibrary
         {
             get
             {
-                return Convert.ToInt32(_assemblyDefinition.HashAlgorithm);
+                if(_hashAlgorithm == -1)
+                {
+                    _hashAlgorithm = Convert.ToInt32(_assemblyDefinition.HashAlgorithm);
+                }
+                return _hashAlgorithm;
             }
         }
 
@@ -50,7 +67,11 @@ namespace ILDasmLibrary
         {
             get
             {
-                return _assemblyDefinition.Version;
+                if(_version == null)
+                {
+                    _version = _assemblyDefinition.Version;
+                }
+                return _version;
             }
         }
 

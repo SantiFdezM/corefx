@@ -10,6 +10,8 @@ namespace ILDasmLibrary
     public class ILDasmTypeDefinition : ILDasmReaders
     {
         private TypeDefinition _typeDefinition;
+        private string _name;
+        private string _namespace;
 
         internal ILDasmTypeDefinition(TypeDefinition typeDef, Readers readers)
             : base(readers)
@@ -21,7 +23,11 @@ namespace ILDasmLibrary
         {
             get
             {
-                return _readers.MdReader.GetString(_typeDefinition.Name);
+                if(_name == null)
+                {
+                    _name = _readers.MdReader.GetString(_typeDefinition.Name);
+                }
+                return _name;
             }
         }
 
@@ -29,7 +35,11 @@ namespace ILDasmLibrary
         {
             get
             {
-                return _readers.MdReader.GetString(_typeDefinition.Namespace);
+                if(_namespace == null)
+                {
+                    _namespace = _readers.MdReader.GetString(_typeDefinition.Namespace);
+                }
+                return _namespace;
             }
         }
     }
