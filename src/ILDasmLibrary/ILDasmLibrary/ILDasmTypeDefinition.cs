@@ -7,11 +7,12 @@ using System.Threading.Tasks;
 
 namespace ILDasmLibrary
 {
-    public class ILDasmTypeDefinition
+    public class ILDasmTypeDefinition : ILDasmReaders
     {
         private TypeDefinition _typeDefinition;
 
-        internal ILDasmTypeDefinition(TypeDefinition typeDef)
+        internal ILDasmTypeDefinition(TypeDefinition typeDef, Readers readers)
+            : base(readers)
         {
             _typeDefinition = typeDef;
         }
@@ -20,7 +21,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                return Readers.MdReader.GetString(_typeDefinition.Name);
+                return _readers.MdReader.GetString(_typeDefinition.Name);
             }
         }
 
@@ -28,7 +29,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                return Readers.MdReader.GetString(_typeDefinition.Namespace);
+                return _readers.MdReader.GetString(_typeDefinition.Namespace);
             }
         }
     }

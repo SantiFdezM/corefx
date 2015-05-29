@@ -12,49 +12,25 @@ namespace ILDasmLibrary
 {
     public class ILDasm
     {
-        public ILDasmAssembly Assembly; 
+        private readonly Readers _readers;
+
+        public ILDasmAssembly Assembly;
         public ILDasm(Stream fileStream)
         {
-            Readers.PeReader = new PEReader(fileStream);
+            _readers = Readers.Create(fileStream);
             BuildAssembly();
         }
 
         public ILDasm(string path)
             : this(File.OpenRead(path))
-        {   
+        {
         }
 
         private void BuildAssembly()
         {
-            AssemblyDefinition assemblyDef = Readers.MdReader.GetAssemblyDefinition();
-            Assembly = new ILDasmAssembly(assemblyDef);
+            AssemblyDefinition assemblyDef = _readers.MdReader.GetAssemblyDefinition();
+            Assembly = new ILDasmAssembly(assemblyDef, _readers);
         }
     }
-
-    internal static class Readers{
-        private static PEReader _peReader;
-        
-        public static PEReader PeReader {
-            get
-            {
-                return _peReader;
-            }
-            internal set
-            {
-                _peReader = value;
-            }
-        }
-
-        public static MetadataReader MdReader
-        {
-            get
-            {
-                if(_peReader == null)
-                {
-                    throw new Exception("PEReader has to be initialized before trying to get MdReader");
-                }
-                return _peReader.GetMetadataReader();
-            }
-        }
-   }
+    
 }

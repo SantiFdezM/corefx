@@ -10,13 +10,14 @@ using System.Collections.ObjectModel;
 
 namespace ILDasmLibrary
 {
-    public class ILDasmAssembly
+    public class ILDasmAssembly : ILDasmReaders
     {
         private AssemblyDefinition _assemblyDefinition;
         private string _publicKey;
-        private Collection<ILDasmTypeDefinition> _typeDefinitions;
+        private ICollection<ILDasmTypeDefinition> _typeDefinitions;
 
-        internal ILDasmAssembly(AssemblyDefinition assemblyDef)
+        internal ILDasmAssembly(AssemblyDefinition assemblyDef, Readers readers) 
+            : base(readers)
         {
             _assemblyDefinition = assemblyDef;
         }
@@ -25,7 +26,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                return Readers.MdReader.GetString(_assemblyDefinition.Name);
+                return _readers.MdReader.GetString(_assemblyDefinition.Name);
             }
         }
 
@@ -33,7 +34,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                return Readers.MdReader.GetString(_assemblyDefinition.Culture);
+                return _readers.MdReader.GetString(_assemblyDefinition.Culture);
             }
         }
 
@@ -72,18 +73,18 @@ namespace ILDasmLibrary
             }
         }
 
-        public Collection<ILDasmTypeDefinition> TypeDefinitions
+        public IEnumerable<ILDasmTypeDefinition> TypeDefinitions
         {
             get
             {
                 if (_typeDefinitions == null) GetTypeDefinitions();
-                return _typeDefinitions;
+                return _typeDefinitions.AsEnumerable<ILDasmTypeDefinition>();
             }
         }
 
         private void GetTypeDefinitions()
         {
-            var handles = Readers.MdReader.TypeDefinitions;
+            var handles = _readers.MdReader.TypeDefinitions;
             _typeDefinitions = new Collection<ILDasmTypeDefinition>();
             foreach(var handle in handles)
             {
@@ -91,14 +92,15 @@ namespace ILDasmLibrary
                 {
                     continue;
                 }
-                var typeDefinition = Readers.MdReader.GetTypeDefinition(handle);
-                _typeDefinitions.Add(new ILDasmTypeDefinition(typeDefinition));
+                var typeDefinition = _readers.MdReader.GetTypeDefinition(handle);
+                _typeDefinitions.Add(new ILDasmTypeDefinition(typeDefinition, _readers));
             }
+            
         }
 
         private string GetPublicKey()
         {
-            var bytes = Readers.MdReader.GetBlobBytes(_assemblyDefinition.PublicKey);
+            var bytes = _readers.MdReader.GetBlobBytes(_assemblyDefinition.PublicKey);
             if (bytes.Length == 0) return string.Empty;
             StringBuilder sb = new StringBuilder();
             sb.Append("(");
