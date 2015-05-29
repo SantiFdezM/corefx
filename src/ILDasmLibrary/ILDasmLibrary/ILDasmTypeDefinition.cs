@@ -12,6 +12,7 @@ namespace ILDasmLibrary
         private TypeDefinition _typeDefinition;
         private string _name;
         private string _namespace;
+        private ICollection<ILDasmMethodDefinition> _methodDefinitions;
 
         internal ILDasmTypeDefinition(TypeDefinition typeDef, Readers readers)
             : base(readers)
@@ -40,6 +41,25 @@ namespace ILDasmLibrary
                     _namespace = _readers.MdReader.GetString(_typeDefinition.Namespace);
                 }
                 return _namespace;
+            }
+        }
+
+        public IEnumerable<ILDasmMethodDefinition> MethodDefinitions
+        {
+            get
+            {
+                if (_methodDefinitions == null) GetMethodDefinitions();
+                return _methodDefinitions.AsEnumerable<ILDasmMethodDefinition>();
+            }
+        }
+
+        private void GetMethodDefinitions()
+        {
+            var handles = _typeDefinition.GetMethods();
+            foreach(var handle in handles)
+            {
+                var method = _readers.MdReader.GetMethodDefinition(handle);
+                _methodDefinitions.Add(new ILDasmMethodDefinition(method, _readers));
             }
         }
     }
