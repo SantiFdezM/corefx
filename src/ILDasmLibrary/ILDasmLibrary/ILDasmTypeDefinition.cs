@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
@@ -56,6 +57,7 @@ namespace ILDasmLibrary
         private void GetMethodDefinitions()
         {
             var handles = _typeDefinition.GetMethods();
+            _methodDefinitions = new Collection<ILDasmMethodDefinition>();
             foreach(var handle in handles)
             {
                 var method = _readers.MdReader.GetMethodDefinition(handle);
