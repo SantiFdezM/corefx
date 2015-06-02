@@ -10,7 +10,6 @@ namespace ILDasmLibrary
         private int _rva = -1;
         private string _signature;
         private string _attributes;
-        private int _maxStack = -1;
         private BlobReader _ilReader;
         private bool isIlReaderInitialized = false;
         private MethodBodyBlock _methodBody;
