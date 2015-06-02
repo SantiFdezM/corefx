@@ -18,18 +18,13 @@ namespace ILDasmLibrary
         public ILDasm(Stream fileStream)
         {
             _readers = Readers.Create(fileStream);
-            BuildAssembly();
+            AssemblyDefinition assemblyDef = _readers.MdReader.GetAssemblyDefinition();
+            Assembly = new ILDasmAssembly(assemblyDef, _readers);
         }
 
         public ILDasm(string path)
             : this(File.OpenRead(path))
         {
-        }
-
-        private void BuildAssembly()
-        {
-            AssemblyDefinition assemblyDef = _readers.MdReader.GetAssemblyDefinition();
-            Assembly = new ILDasmAssembly(assemblyDef, _readers);
         }
     }
     

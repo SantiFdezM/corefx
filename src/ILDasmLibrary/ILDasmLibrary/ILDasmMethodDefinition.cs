@@ -3,14 +3,13 @@ using System.Reflection.Metadata;
 
 namespace ILDasmLibrary
 {
-    public class ILDasmMethodDefinition : ILDasmReaders
+    public class ILDasmMethodDefinition : ILDasmObject
     {
         private MethodDefinition _methodDefinition;
         private string _name;
         private int _rva = -1;
         private string _signature;
         private string _attributes;
-        private int _size = -1;
         private int _maxStack = -1;
         private BlobReader _ilReader;
         private bool isIlReaderInitialized = false;
@@ -29,7 +28,7 @@ namespace ILDasmLibrary
             {
                 if (!isIlReaderInitialized)
                 {
-                    isIlReaderInitialized = !isIlReaderInitialized;
+                    isIlReaderInitialized = true;
                     _ilReader = _methodBody.GetILReader();
                 }
                 return _ilReader;
@@ -40,11 +39,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                if(_name == null)
-                {
-                    _name = _readers.MdReader.GetString(_methodDefinition.Name);
-                }
-                return _name;
+                return GetCachedValue(_methodDefinition.Name, ref _name);
             }
         }
 
@@ -64,7 +59,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                if(_signature != null)
+                if(_signature == null)
                 {
                     _signature = GetSignature();
                 }
@@ -88,11 +83,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                if(_size == -1)
-                {
-                    _size = _methodBody.Size;
-                }
-                return _size;
+                return _methodBody.Size;
             }
         }
 
@@ -100,11 +91,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                if(_maxStack == -1)
-                {
-                    _maxStack = _methodBody.MaxStack;
-                }
-                return _maxStack;
+                return _methodBody.MaxStack;
             }
         }
 

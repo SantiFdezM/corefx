@@ -10,7 +10,7 @@ using System.Collections.ObjectModel;
 
 namespace ILDasmLibrary
 {
-    public class ILDasmAssembly : ILDasmReaders
+    public class ILDasmAssembly : ILDasmObject
     {
         private AssemblyDefinition _assemblyDefinition;
         private string _publicKey;
@@ -31,11 +31,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                if(_name == null)
-                {
-                    _name = _readers.MdReader.GetString(_assemblyDefinition.Name);
-                }
-                return _name;
+                return GetCachedValue(_assemblyDefinition.Name, ref _name);
             }
         }
 
@@ -43,11 +39,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                if(_culture == null)
-                {
-                    _culture = _readers.MdReader.GetString(_assemblyDefinition.Culture);
-                }
-                return _culture;
+                return GetCachedValue(_assemblyDefinition.Name, ref _culture);
             }
         }
 
@@ -79,7 +71,10 @@ namespace ILDasmLibrary
         {
             get
             {
-                if (_publicKey != null) return _publicKey;
+                if (_publicKey != null)
+                {
+                    return _publicKey;
+                }
                 _publicKey = GetPublicKey();
                 return _publicKey;
             }
@@ -89,7 +84,10 @@ namespace ILDasmLibrary
         {
             get
             {
-                if (_assemblyDefinition.Flags.HasFlag(System.Reflection.AssemblyFlags.Retargetable)) return "retargetable";
+                if (_assemblyDefinition.Flags.HasFlag(System.Reflection.AssemblyFlags.Retargetable))
+                {
+                    return "retargetable";
+                }
                 return string.Empty;
             }
         }
@@ -98,7 +96,10 @@ namespace ILDasmLibrary
         {
             get
             {
-                if (_typeDefinitions == null) GetTypeDefinitions();
+                if (_typeDefinitions == null)
+                {
+                    GetTypeDefinitions();
+                }
                 return _typeDefinitions.AsEnumerable<ILDasmTypeDefinition>();
             }
         }
@@ -122,7 +123,10 @@ namespace ILDasmLibrary
         private string GetPublicKey()
         {
             var bytes = _readers.MdReader.GetBlobBytes(_assemblyDefinition.PublicKey);
-            if (bytes.Length == 0) return string.Empty;
+            if (bytes.Length == 0)
+            {
+                return string.Empty;
+            }
             StringBuilder sb = new StringBuilder();
             sb.Append("(");
             foreach (byte _byte in bytes)

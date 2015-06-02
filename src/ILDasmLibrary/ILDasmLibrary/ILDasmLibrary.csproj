@@ -47,7 +47,7 @@
     <Compile Include="ILDasmAssembly.cs" />
     <Compile Include="ILDasmMethodDefinition.cs" />
     <Compile Include="ILDasmWriter.cs" />
-    <Compile Include="ILDasmReaders.cs" />
+    <Compile Include="ILDasmObject.cs" />
     <Compile Include="ILDasmTypeDefinition.cs" />
     <Compile Include="ILWriterHelpers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

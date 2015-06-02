@@ -11,13 +11,13 @@ namespace ILDasmLibrary
     {
         internal static ILWriterHelpers Instance = new ILWriterHelpers();
 
-        internal readonly OpCode[] _oneByteOpCodes;
-        internal readonly OpCode[] _twoByteOpCodes;
+        internal readonly OpCode[] oneByteOpCodes;
+        internal readonly OpCode[] twoByteOpCodes;
             
         private ILWriterHelpers()
         {
-            _oneByteOpCodes = new OpCode[0x100];
-            _twoByteOpCodes = new OpCode[0x100];
+            oneByteOpCodes = new OpCode[0x100];
+            twoByteOpCodes = new OpCode[0x100];
 
             var opCodeType = typeof(OpCode);
             var fields = typeof(OpCodes).GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
@@ -30,11 +30,11 @@ namespace ILDasmLibrary
                 var value = unchecked((ushort)opCode.Value);
                 if(value < 0x100)
                 {
-                    _oneByteOpCodes[value] = opCode;
+                    oneByteOpCodes[value] = opCode;
                 }
                 else if((value & 0xff00) == 0xfe00)
                 {
-                    _twoByteOpCodes[value & 0xff] = opCode;
+                    twoByteOpCodes[value & 0xff] = opCode;
                 }
             }
         }

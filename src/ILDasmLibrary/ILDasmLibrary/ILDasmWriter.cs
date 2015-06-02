@@ -11,29 +11,28 @@ namespace ILDasmLibrary
 {
     public struct ILDasmWriter
     {
-        private StringBuilder sb;
         private string indent;
 
         public ILDasmWriter()
         {
-            sb = new StringBuilder();
             indent = "  ";
         }
         public string DumpMethod(ILDasmMethodDefinition _methodDefinition)
         {
-            DumpMethodDefinition(_methodDefinition);
-            DumpMethodBody(_methodDefinition);
+            StringBuilder sb = new StringBuilder();
+            DumpMethodDefinition(_methodDefinition, sb);
+            DumpMethodBody(_methodDefinition, sb);
             sb.AppendLine("}");
             return sb.ToString();
         }
         
-        private void DumpMethodDefinition(ILDasmMethodDefinition _methodDefinition)
+        private void DumpMethodDefinition(ILDasmMethodDefinition _methodDefinition, StringBuilder sb)
         {
-            sb.AppendFormat(".method {0}", _methodDefinition.Name);
-            sb.AppendLine("\n{");
+            sb.AppendLine(String.Format(".method {0}", _methodDefinition.Name));
+            sb.AppendLine("{");
         }
 
-        private void DumpMethodBody(ILDasmMethodDefinition _methodDefinition)
+        private void DumpMethodBody(ILDasmMethodDefinition _methodDefinition, StringBuilder sb)
         {
             var ilReader = _methodDefinition.IlReader;
             ilReader.Reset();
@@ -51,19 +50,22 @@ namespace ILDasmLibrary
                 OpCode opCode;
                 int expectedSize;
                 var _byte = ilReader.ReadByte();
-                if(_byte == 0xfe && ilReader.Offset < ilReader.Length)
+                /*If the byte read is 0xfe it means is a two byte instruction, 
+                so since it is goint to read the second byte to get the actual
+                instruction it has two check that the offset is still less than the length.*/
+                if (_byte == 0xfe && ilReader.Offset < ilReader.Length) 
                 {
-                    opCode = ILWriterHelpers.Instance._twoByteOpCodes[ilReader.ReadByte()];
+                    opCode = ILWriterHelpers.Instance.twoByteOpCodes[ilReader.ReadByte()];
                     expectedSize = 2;
                 }
                 else
                 {
-                    opCode = ILWriterHelpers.Instance._oneByteOpCodes[_byte];
+                    opCode = ILWriterHelpers.Instance.oneByteOpCodes[_byte];
                     expectedSize = 1;
                 }
                 sb.Append(indent);
                 sb.AppendFormat(opCode.OperandType == OperandType.InlineNone ? "{0}" : "{0,-10}", opCode);
-                int size = 2;
+                int size = expectedSize;
                 switch (opCode.OperandType)
                 {
                     case OperandType.InlineBrTarget:
@@ -126,11 +128,10 @@ namespace ILDasmLibrary
                         floatOperand = ilReader.ReadSingle();
                         break;
                     case OperandType.ShortInlineVar:
+                        size = 2;
                         byteOperand = ilReader.ReadByte();
                         break;
-                    case OperandType.InlinePhi:
                     case OperandType.InlineNone:
-                        size = 1;
                         break;
                     default:
                         break;
@@ -159,7 +160,7 @@ namespace ILDasmLibrary
             return String.Format(" {0}.{1}::{2}", GetString(_methodDefinition, parent.Namespace), GetString(_methodDefinition, parent.Name), GetString(_methodDefinition, definition.Name));
         }
 
-        private string GetString(ILDasmMethodDefinition _methodDefinition, StringHandle handle)
+        private static string GetString(ILDasmMethodDefinition _methodDefinition, StringHandle handle)
         {
             return _methodDefinition._readers.MdReader.GetString(handle);
         }
