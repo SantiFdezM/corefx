@@ -51,6 +51,7 @@
     <Compile Include="ILDasmTypeDefinition.cs" />
     <Compile Include="ILWriterHelpers.cs" />
     <Compile Include="Intructions\ILDasmBranchInstruction.cs" />
+    <Compile Include="Intructions\ILDasmInstructionWithNoValue.cs" />
     <Compile Include="Intructions\ILDasmNumericValueInstruction.cs" />
     <Compile Include="Intructions\ILDasmStringInstruction.cs" />
     <Compile Include="Intructions\ILDasmInstruction.cs" />

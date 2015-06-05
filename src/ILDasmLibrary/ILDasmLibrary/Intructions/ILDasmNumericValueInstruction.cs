@@ -19,7 +19,7 @@ namespace ILDasmLibrary.Intructions
         {
             if (showBytes)
             {
-                sb.AppendFormat(opCode.OperandType == OperandType.InlineNone ? "{0}" : "{0,-4} | ", opCode.Value.ToString("X2"));
+                sb.AppendFormat("{0,-4} | ", opCode.Value.ToString("X2"));
                 sb.Append(Bytes);
                 return;
             }

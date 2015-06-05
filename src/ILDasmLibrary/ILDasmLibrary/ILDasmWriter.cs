@@ -65,8 +65,9 @@ namespace ILDasmLibrary
                     expectedSize = 1;
                 }
                 sb.Append(indent);
-                sb.AppendFormat(opCode.OperandType == OperandType.InlineNone ? "{0}" : "{0,-10}", opCode);
+                //sb.AppendFormat(opCode.OperandType == OperandType.InlineNone ? "{0}" : "{0,-10}", opCode);
                 int size = expectedSize;
+                bool showBytes = true;
                 ILDasmInstruction instruction;
                 switch (opCode.OperandType)
                 {
@@ -74,7 +75,7 @@ namespace ILDasmLibrary
                         size += 4;
                         intOperand = ilReader.ReadInt32();
                         instruction = new ILDasmBranchInstruction(opCode, intOperand, ilOffset, expectedSize + 4);
-                        instruction.Dump(sb);
+                        instruction.Dump(sb, showBytes);
                         break;
                     case OperandType.InlineField:
                         size += 4;
@@ -85,26 +86,26 @@ namespace ILDasmLibrary
                         size += 4;
                         intOperand = ilReader.ReadInt32();
                         instruction = new ILDasmNumericValueInstruction<int>(opCode, intOperand, -1, expectedSize + 4);
-                        instruction.Dump(sb, true);
+                        instruction.Dump(sb, showBytes);
                         break;
                     case OperandType.InlineI8:
                         size += 8;
                         longOperand = ilReader.ReadInt64();
                         instruction = new ILDasmNumericValueInstruction<long>(opCode, longOperand, -1, expectedSize + 8);
-                        instruction.Dump(sb, true);
+                        instruction.Dump(sb, showBytes);
                         break;
                     case OperandType.InlineMethod:
                         size += 4;
                         intOperand = ilReader.ReadInt32();
                         string methodCall = SolveMethodName(_methodDefinition, intOperand);
                         instruction = new ILDasmStringInstruction<string>(opCode, methodCall, intOperand);
-                        instruction.Dump(sb);
+                        instruction.Dump(sb, showBytes);
                         break;
                     case OperandType.InlineR:
                         size += 8;
                         doubleOperand = ilReader.ReadDouble();
                         instruction = new ILDasmNumericValueInstruction<double>(opCode, doubleOperand, -1, expectedSize + 8);
-                        instruction.Dump(sb, true);
+                        instruction.Dump(sb, showBytes);
                         break;
                     case OperandType.InlineSig:
                         sb.Append("To do InlineSig");
@@ -116,7 +117,7 @@ namespace ILDasmLibrary
                         intOperand = ilReader.ReadInt32();
                         string str = GetArgumentString(_methodDefinition, intOperand);
                         instruction = new ILDasmStringInstruction<string>(opCode,string.Format(" \"{0}\"",str), intOperand);
-                        instruction.Dump(sb);
+                        instruction.Dump(sb,showBytes);
                         break;
                     case OperandType.InlineSwitch:
                         size += 4;
@@ -142,19 +143,19 @@ namespace ILDasmLibrary
                         size += 1;
                         byteOperand = ilReader.ReadByte();
                         instruction = new ILDasmBranchInstruction(opCode, (int)byteOperand, ilOffset, expectedSize + 1);
-                        instruction.Dump(sb);
+                        instruction.Dump(sb,showBytes);
                         break;
                     case OperandType.ShortInlineI:
                         size += 1;
                         byteOperand = ilReader.ReadByte();
                         instruction = new ILDasmNumericValueInstruction<byte>(opCode, byteOperand, -1, expectedSize + 1);
-                        instruction.Dump(sb);
+                        instruction.Dump(sb,showBytes);
                         break;
                     case OperandType.ShortInlineR:
                         size += 1;
                         floatOperand = ilReader.ReadSingle();
                         instruction = new ILDasmNumericValueInstruction<float>(opCode, floatOperand, -1, expectedSize + 4);
-                        instruction.Dump(sb, true);
+                        instruction.Dump(sb, showBytes);
                         break;
                     case OperandType.ShortInlineVar:
                         sb.Append("To do ShortInlineVar");
@@ -162,7 +163,8 @@ namespace ILDasmLibrary
                         byteOperand = ilReader.ReadByte();
                         break;
                     case OperandType.InlineNone:
-                        sb.Append(" To do InlineNone");
+                        instruction = new ILDasmInstructionWithNoValue(opCode, expectedSize);
+                        instruction.Dump(sb,showBytes);
                         break;
                     default:
                         break;
