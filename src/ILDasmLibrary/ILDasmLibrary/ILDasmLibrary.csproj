@@ -50,6 +50,11 @@
     <Compile Include="ILDasmObject.cs" />
     <Compile Include="ILDasmTypeDefinition.cs" />
     <Compile Include="ILWriterHelpers.cs" />
+    <Compile Include="Intructions\ILDasmBranchInstruction.cs" />
+    <Compile Include="Intructions\ILDasmNumericValueInstruction.cs" />
+    <Compile Include="Intructions\ILDasmStringInstruction.cs" />
+    <Compile Include="Intructions\ILDasmInstruction.cs" />
+    <Compile Include="Intructions\ILDasmInstructionWithValue.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Readers.cs" />
   </ItemGroup>

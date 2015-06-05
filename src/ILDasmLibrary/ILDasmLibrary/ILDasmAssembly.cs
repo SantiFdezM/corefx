@@ -71,11 +71,10 @@ namespace ILDasmLibrary
         {
             get
             {
-                if (_publicKey != null)
+                if (_publicKey == null)
                 {
-                    return _publicKey;
+                    _publicKey = GetPublicKey();
                 }
-                _publicKey = GetPublicKey();
                 return _publicKey;
             }
         }
