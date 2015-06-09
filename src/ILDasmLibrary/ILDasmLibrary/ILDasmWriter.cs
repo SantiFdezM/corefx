@@ -7,6 +7,8 @@ using System.Reflection.Emit;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.Metadata;
 using ILDasmLibrary.Intructions;
+using ILDasmLibrary.Decoder;
+using System.Reflection.Metadata.Decoding;
 
 namespace ILDasmLibrary
 {
@@ -67,7 +69,7 @@ namespace ILDasmLibrary
                 sb.Append(indent);
                 //sb.AppendFormat(opCode.OperandType == OperandType.InlineNone ? "{0}" : "{0,-10}", opCode);
                 int size = expectedSize;
-                bool showBytes = true;
+                bool showBytes = false;
                 ILDasmInstruction instruction;
                 switch (opCode.OperandType)
                 {
@@ -81,6 +83,7 @@ namespace ILDasmLibrary
                         size += 4;
                         sb.Append("To do InlineField");
                         intOperand = ilReader.ReadInt32();
+                        var fieldInfo = GetFieldInformation(_methodDefinition, intOperand);
                         break;
                     case OperandType.InlineI:
                         size += 4;
@@ -152,7 +155,7 @@ namespace ILDasmLibrary
                         instruction.Dump(sb,showBytes);
                         break;
                     case OperandType.ShortInlineR:
-                        size += 1;
+                        size += 4;
                         floatOperand = ilReader.ReadSingle();
                         instruction = new ILDasmNumericValueInstruction<float>(opCode, floatOperand, -1, expectedSize + 4);
                         instruction.Dump(sb, showBytes);
@@ -172,6 +175,19 @@ namespace ILDasmLibrary
                 sb.AppendLine();
                 ilOffset += size;
             }
+        }
+
+        private string GetFieldInformation(ILDasmMethodDefinition _methodDefinition, int intOperand)
+        {
+            var handle = MetadataTokens.FieldDefinitionHandle(intOperand);
+            var definition = _methodDefinition._readers.MdReader.GetFieldDefinition(handle);
+            var typeHandle = definition.GetDeclaringType();
+            var type = _methodDefinition._readers.MdReader.GetTypeDefinition(typeHandle);
+            /* TO DO add field return type
+            var signature = SignatureDecoder.DecodeFieldSignature(definition.Signature, new ILDasmTypeProvider(_methodDefinition._readers.MdReader));
+            */
+            var signature = SignatureDecoder.DecodeFieldSignature(definition.Signature, new ILDasmTypeProvider(_methodDefinition._readers.MdReader));
+            return String.Format("{0}.{1}::{2}", GetString(_methodDefinition, type.Namespace), GetString(_methodDefinition, type.Name), GetString(_methodDefinition, definition.Name));
         }
 
         private string GetArgumentString(ILDasmMethodDefinition _methodDefinition, int intOperand)
