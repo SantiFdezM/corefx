@@ -14,7 +14,7 @@ namespace ILDasmLibrary
     {
         private AssemblyDefinition _assemblyDefinition;
         private string _publicKey;
-        private ICollection<ILDasmTypeDefinition> _typeDefinitions;
+        private IList<ILDasmTypeDefinition> _typeDefinitions;
         private string _name;
         private string _culture;
         private int _hashAlgorithm;
@@ -97,16 +97,16 @@ namespace ILDasmLibrary
             {
                 if (_typeDefinitions == null)
                 {
-                    GetTypeDefinitions();
+                    PopulateTypeDefinitions();
                 }
                 return _typeDefinitions.AsEnumerable<ILDasmTypeDefinition>();
             }
         }
 
-        private void GetTypeDefinitions()
+        private void PopulateTypeDefinitions()
         {
             var handles = _readers.MdReader.TypeDefinitions;
-            _typeDefinitions = new Collection<ILDasmTypeDefinition>();
+            _typeDefinitions = new List<ILDasmTypeDefinition>();
             foreach(var handle in handles)
             {
                 if (handle.IsNil)

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Decoding;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -20,6 +21,11 @@ namespace ILDasmLibrary.Decoder
             {
                 return _reader;
             }
+        }
+
+        public ILDasmTypeProvider(MetadataReader reader)
+        {
+            this._reader = reader;
         }
 
         private string GetName(TypeReference reference)
@@ -65,7 +71,6 @@ namespace ILDasmLibrary.Decoder
         {
             Handle resolutionScope = reference.ResolutionScope;
             string name = GetName(reference);
-
             switch (resolutionScope.Kind)
             {
                 case HandleKind.ModuleReference:
@@ -79,14 +84,34 @@ namespace ILDasmLibrary.Decoder
             }
         }
 
-        public ILDasmTypeProvider(MetadataReader reader)
-        {
-            this._reader = reader;
-        }
-
         public string GetArrayType(string elementType, ArrayShape shape)
         {
-            throw new NotImplementedException();
+            StringBuilder sb = new StringBuilder();
+
+            sb.Append(elementType);
+            sb.Append("[");
+            for(int i = 0; i < shape.Rank; i++)
+            {
+                int lowerBound = 0;
+                if(i < shape.LowerBounds.Length)
+                {
+                    lowerBound = shape.LowerBounds[i];
+                    sb.Append(lowerBound);
+                    sb.Append("...");
+                }
+
+                if(i < shape.Sizes.Length)
+                {
+                    sb.Append(lowerBound + shape.Sizes[i] - 1);
+                }
+
+                if( i < shape.Rank -1)
+                {
+                    sb.Append(",");
+                }
+            }
+            sb.Append("]");
+            return sb.ToString();
         }
 
         public string GetByReferenceType(string elementType)
@@ -96,12 +121,12 @@ namespace ILDasmLibrary.Decoder
 
         public string GetFunctionPointerType(MethodSignature<string> signature)
         {
-            throw new NotImplementedException();
+            return String.Format("method {0}*{1}", signature.ReturnType, GetParameterList(signature));
         }
 
         public string GetGenericInstance(string genericType, ImmutableArray<string> typeArguments)
         {
-            throw new NotImplementedException();
+            return String.Format("{0}<{1}>", genericType, String.Join(",", typeArguments));
         }
 
         public string GetGenericMethodParameter(int index)
@@ -116,7 +141,18 @@ namespace ILDasmLibrary.Decoder
 
         public string GetModifiedType(string unmodifiedType, ImmutableArray<CustomModifier<string>> customModifiers)
         {
-            throw new NotImplementedException();
+            StringBuilder sb = new StringBuilder();
+            sb.Append(unmodifiedType);
+            sb.Append(" ");
+
+            foreach(var modifier in customModifiers)
+            {
+                sb.Append(modifier.IsRequired ? "modreq(" : "modopt(");
+                sb.Append(modifier.Type);
+                sb.Append(")");
+            }
+
+            return sb.ToString();
         }
 
         public string GetPinnedType(string elementType)
@@ -188,6 +224,62 @@ namespace ILDasmLibrary.Decoder
         public string GetTypeFromReference(TypeReferenceHandle handle)
         {
             return GetFullName(Reader.GetTypeReference(handle));
+        }
+
+        public string GetParameterList(MethodSignature<string> signature, ParameterHandleCollection? parameters = null)
+        {
+            ImmutableArray<string> types = signature.ParameterTypes;
+            if (types.IsEmpty)
+            {
+                return "()";
+            }
+            int requiredCount = Math.Min(signature.RequiredParameterCount, types.Length);
+            string[] parameterNames = GetParameterNames(parameters, requiredCount);
+            StringBuilder sb = new StringBuilder();
+            sb.Append("(");
+            int i = 0;
+            for (; i < requiredCount; i++)
+            {
+                if (i > 0)
+                {
+                    sb.Append(",");
+                }
+                sb.Append(types[i]);
+                if (parameterNames != null)
+                {
+                    sb.AppendFormat(" {0}", parameterNames[i]);
+                }
+            }
+
+            if (i < types.Length)
+            {
+                sb.Append("...,");
+            }
+            for (; i < types.Length; i++)
+            {
+                sb.Append(",");
+                sb.Append(types[i]);
+            }
+            sb.Append(")");
+            return sb.ToString();
+        }
+
+        private string[] GetParameterNames(ParameterHandleCollection? parameters, int requiredCount)
+        {
+            if(parameters == null || requiredCount == 0)
+            {
+                return null;
+            }
+            string[] parameterNames = new string[requiredCount];
+            foreach(var handle in parameters)
+            {
+                Parameter parameter = Reader.GetParameter(handle);
+                if(parameter.SequenceNumber > 0 && parameter.SequenceNumber <= requiredCount)
+                {
+                    parameterNames[parameter.SequenceNumber - 1] = Reader.GetString(parameter.Name);
+                }
+            }
+            return parameterNames;
         }
     }
 }

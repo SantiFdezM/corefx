@@ -1,4 +1,5 @@
-﻿using ILDasmLibrary.Intructions;
+﻿using ILDasmLibrary.Decoder;
+using ILDasmLibrary.Instructions;
 using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
@@ -8,20 +9,23 @@ namespace ILDasmLibrary
 {
     public class ILDasmMethodDefinition : ILDasmObject
     {
-        private MethodDefinition _methodDefinition;
+        private readonly MethodDefinition _methodDefinition;
+        private readonly MethodBodyBlock _methodBody;
+        private readonly ILDasmTypeProvider _provider;
         private string _name;
         private int _rva = -1;
         private string _signature;
         private string _attributes;
         private BlobReader _ilReader;
+        private IEnumerable<ILInstruction> _instructions;
         private bool isIlReaderInitialized = false;
-        private MethodBodyBlock _methodBody;
 
         internal ILDasmMethodDefinition(MethodDefinition methodDefinition, Readers readers) 
             : base(readers)
         {
             _methodDefinition = methodDefinition;
             _methodBody = _readers.PEReader.GetMethodBody(this.RelativeVirtualAdress);
+            _provider = new ILDasmTypeProvider(readers.MdReader);
         }
 
         internal BlobReader IlReader
@@ -34,6 +38,14 @@ namespace ILDasmLibrary
                     _ilReader = _methodBody.GetILReader();
                 }
                 return _ilReader;
+            }
+        }
+
+        internal ILDasmTypeProvider Provider
+        {
+            get
+            {
+                return _provider;
             }
         }
 
@@ -94,6 +106,18 @@ namespace ILDasmLibrary
             get
             {
                 return _methodBody.MaxStack;
+            }
+        }
+
+        public IEnumerable<ILInstruction> Instructions
+        {
+            get
+            {
+                if(_instructions == null)
+                {
+                    _instructions = ILDasmDecoder.DecodeMethodBody(this);
+                }
+                return _instructions;
             }
         }
 

@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Decoder\ILDasmDecoder.cs" />
     <Compile Include="Decoder\ILDasmTypeProvider.cs" />
     <Compile Include="ILDasm.cs" />
     <Compile Include="ILDasmAssembly.cs" />
@@ -50,13 +51,18 @@
     <Compile Include="ILDasmWriter.cs" />
     <Compile Include="ILDasmObject.cs" />
     <Compile Include="ILDasmTypeDefinition.cs" />
-    <Compile Include="ILWriterHelpers.cs" />
-    <Compile Include="Intructions\ILDasmBranchInstruction.cs" />
-    <Compile Include="Intructions\ILDasmInstructionWithNoValue.cs" />
-    <Compile Include="Intructions\ILDasmNumericValueInstruction.cs" />
-    <Compile Include="Intructions\ILDasmStringInstruction.cs" />
-    <Compile Include="Intructions\ILDasmInstruction.cs" />
-    <Compile Include="Intructions\ILDasmInstructionWithValue.cs" />
+    <Compile Include="Decoder\ILWriterHelpers.cs" />
+    <Compile Include="Instructions\ILDasmBranchInstruction.cs" />
+    <Compile Include="Instructions\ILDasmByteInstruction.cs" />
+    <Compile Include="Instructions\ILDasmDoubleInstruction.cs" />
+    <Compile Include="Instructions\ILDasmFloatInstruction.cs" />
+    <Compile Include="Instructions\ILDasmInstructionWithNoValue.cs" />
+    <Compile Include="Instructions\ILDasmIntInstruction.cs" />
+    <Compile Include="Instructions\ILDasmLongInstruction.cs" />
+    <Compile Include="Instructions\ILDasmNumericValueInstruction.cs" />
+    <Compile Include="Instructions\ILDasmStringInstruction.cs" />
+    <Compile Include="Instructions\ILInstruction.cs" />
+    <Compile Include="Instructions\ILDasmInstructionWithValue.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Readers.cs" />
   </ItemGroup>
