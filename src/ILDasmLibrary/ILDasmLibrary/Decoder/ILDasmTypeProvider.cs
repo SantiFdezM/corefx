@@ -257,8 +257,9 @@ namespace ILDasmLibrary.Decoder
             }
             for (; i < types.Length; i++)
             {
-                sb.Append(",");
                 sb.Append(types[i]);
+                if(i < types.Length -1)
+                    sb.Append(",");
             }
             sb.Append(")");
             return sb.ToString();

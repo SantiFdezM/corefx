@@ -9,8 +9,8 @@ namespace ILDasmLibrary.Instructions
 {
     public class ILDasmStringInstruction : ILDasmInstructionWithValue<string>
     {
-        internal ILDasmStringInstruction(OpCode opCode,string value, int token)
-            : base(opCode, value, token, 5)
+        internal ILDasmStringInstruction(OpCode opCode,string value, int token, int size)
+            : base(opCode, value, token, size)
         {
         }
 

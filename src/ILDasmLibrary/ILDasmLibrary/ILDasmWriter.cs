@@ -31,8 +31,8 @@ namespace ILDasmLibrary
         
         private void DumpMethodDefinition(ILDasmMethodDefinition _methodDefinition, StringBuilder sb)
         {
-            sb.AppendLine(String.Format(".method {0}", _methodDefinition.Name));
             Console.WriteLine(_methodDefinition.Name);
+            sb.AppendLine(_methodDefinition.GetDecodedSignature());
             sb.AppendLine("{");
         }
 

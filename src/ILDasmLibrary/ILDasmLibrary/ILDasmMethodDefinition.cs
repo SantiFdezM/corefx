@@ -14,11 +14,12 @@ namespace ILDasmLibrary
         private readonly ILDasmTypeProvider _provider;
         private string _name;
         private int _rva = -1;
-        private string _signature;
+        private MethodSignature<string> _signature;
         private string _attributes;
         private BlobReader _ilReader;
         private IEnumerable<ILInstruction> _instructions;
         private bool isIlReaderInitialized = false;
+        private bool isSignatureInitialized = false;
 
         internal ILDasmMethodDefinition(MethodDefinition methodDefinition, Readers readers) 
             : base(readers)
@@ -69,13 +70,14 @@ namespace ILDasmLibrary
             }
         }
 
-        public string Signature
+        public MethodSignature<string> Signature
         {
             get
             {
-                if(_signature == null)
+                if(!isSignatureInitialized)
                 {
-                    _signature = GetSignature();
+                    isSignatureInitialized = true;
+                    _signature = ILDasmDecoder.DecodeMethodSignature(_methodDefinition, _provider);
                 }
                 return _signature;
             }
@@ -121,20 +123,19 @@ namespace ILDasmLibrary
             }
         }
 
-        public string DumpMethod()
+        public string GetDecodedSignature()
         {
-            return new ILDasmWriter().DumpMethod(this);
+            return String.Format(".method {0} {1}{2}", Signature.ReturnType, Name, _provider.GetParameterList(Signature, _methodDefinition.GetParameters()));
+        }
+
+        public string DumpMethod(bool showBytes = false)
+        {
+            return new ILDasmWriter().DumpMethod(this, showBytes);
         }
 
         private string GetAttributes()
         {
             return _methodDefinition.Attributes.ToString();
-        }
-
-        private string GetSignature()
-        {
-            //TO DO.
-            return string.Empty;
         }
 
         public string GetFormattedRva()

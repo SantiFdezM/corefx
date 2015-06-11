@@ -18,6 +18,46 @@ namespace ILDasmLibrary.Decoder
         {
         }
 
+        public static bool IsTypeReference(int token)
+        {
+            return (token >> 24) == 0x01;
+        }
+
+        public static bool IsTypeDefinition(int token)
+        {
+            return (token >> 24) == 0x02;
+        }
+
+        public static bool IsUserString(int token)
+        {
+            return (token >> 24) == 0x70;
+        }
+
+        public static bool IsMemberReference(int token)
+        {
+            return (token >> 24) == 0x0a;
+        }
+
+        public static bool IsMethodSpecification(int token)
+        {
+            return (token >> 24) == 0x2b;
+        }
+
+        public static bool IsMethodDefinition(int token)
+        {
+            return (token >> 24) == 0x06;
+        }
+
+        public static bool IsFieldDefinition(int token)
+        {
+            return (token >> 24) == 0x04;
+        }
+
+        public static MethodSignature<string> DecodeMethodSignature(MethodDefinition _methodDefinition, ILDasmTypeProvider _provider)
+        {
+            return SignatureDecoder.DecodeMethodSignature(_methodDefinition.Signature, _provider);
+        }
+
         public static IEnumerable<ILInstruction> DecodeMethodBody(ILDasmMethodDefinition _methodDefinition)
         {
             return DecodeMethodBody(_methodDefinition.IlReader, _methodDefinition._readers.MdReader, _methodDefinition.Provider);
@@ -29,7 +69,7 @@ namespace ILDasmLibrary.Decoder
             int intOperand;
             short shortOperand;
             int ilOffset = 0;
-            ICollection<ILInstruction> instructions = new Collection<ILInstruction>();
+            IList<ILInstruction> instructions = new List<ILInstruction>();
             ILInstruction instruction = null;
             while (ilReader.Offset < ilReader.Length)
             {
@@ -49,107 +89,124 @@ namespace ILDasmLibrary.Decoder
                     opCode = ILDecoderHelpers.Instance.oneByteOpCodes[_byte];
                     expectedSize = 1;
                 }
-                int size = expectedSize;
-                Console.WriteLine(opCode.Name);
                 switch (opCode.OperandType)
                 {
-                    case OperandType.InlineBrTarget:
-                        size += 4;
-                        instruction = new ILDasmBranchInstruction(opCode, ilReader.ReadInt32(), ilOffset, expectedSize + 4);
-                        break;
                     case OperandType.InlineField:
-                        size += 4;
                         intOperand = ilReader.ReadInt32();
-                        var fieldInfo = GetFieldInformation(mdReader, intOperand, provider);
-                        instruction = new ILDasmStringInstruction(opCode, fieldInfo, intOperand);
+                        string fieldInfo = GetFieldInformation(mdReader, intOperand, provider);
+                        instruction = new ILDasmStringInstruction(opCode, fieldInfo, intOperand, expectedSize + 4);
                         break;
                     case OperandType.InlineString:
-                        size += 4;
                         intOperand = ilReader.ReadInt32();
                         string str = GetArgumentString(mdReader, intOperand);
-                        instruction = new ILDasmStringInstruction(opCode, str, intOperand);
+                        instruction = new ILDasmStringInstruction(opCode, str, intOperand, expectedSize + 4);
                         break;
                     case OperandType.InlineMethod:
-                        size += 4;
                         intOperand = ilReader.ReadInt32();
                         string methodCall = SolveMethodName(mdReader, intOperand, provider);
-                        instruction = new ILDasmStringInstruction(opCode, methodCall, intOperand);
+                        instruction = new ILDasmStringInstruction(opCode, methodCall, intOperand, expectedSize + 4);
+                        break;
+                    case OperandType.InlineType:
+                        intOperand = ilReader.ReadInt32();
+                        string type = GetTypeInformation(mdReader, intOperand, provider);
+                        instruction = new ILDasmStringInstruction(opCode, type, intOperand, expectedSize + 4);
+                        break;
+                    case OperandType.InlineTok:
+                        intOperand = ilReader.ReadInt32();
+                        string tokenType = GetInlineTokenType(mdReader, intOperand, provider);
+                        instruction = new ILDasmStringInstruction(opCode, tokenType, intOperand, expectedSize + 4);
                         break;
                     case OperandType.InlineI:
-                        size += 4;
                         instruction = new ILDasmIntInstruction(opCode, ilReader.ReadInt32(), -1, expectedSize + 4);
                         break;
                     case OperandType.InlineI8:
-                        size += 8;
                         instruction = new ILDasmLongInstruction(opCode, ilReader.ReadInt64(), -1, expectedSize + 8);
                         break;
                     case OperandType.InlineR:
-                        size += 8;
                         instruction = new ILDasmDoubleInstruction(opCode, ilReader.ReadDouble(), -1, expectedSize + 8);
                         break;
-                    case OperandType.InlineSig:
-                        /*TO DO*/
-                        size += 4;
-                        intOperand = ilReader.ReadInt32();
-                        instruction = new ILDasmStringInstruction(opCode, "TO DO", intOperand);
-                        break;
                     case OperandType.InlineSwitch:
-                        /*TO DO*/
-                        size += 4;
-                        intOperand = ilReader.ReadInt32();
-                        instruction = new ILDasmStringInstruction(opCode, "TO DO", intOperand);
+                        instruction = CreateSwitchInstruction(ref ilReader, expectedSize, ilOffset, opCode);
                         break;
-                    case OperandType.InlineTok:
-                        /*TO DO*/
-                        size += 4;
-                        intOperand = ilReader.ReadInt32();
-                        instruction = new ILDasmStringInstruction(opCode, "TO DO", intOperand);
-                        break;
-                    case OperandType.InlineType:
-                        /*TO DO*/
-                        size += 4;
-                        intOperand = ilReader.ReadInt32();
-                        instruction = new ILDasmStringInstruction(opCode, "TO DO", intOperand);
-                        break;
-                    case OperandType.InlineVar:
-                        /*TO DO*/
-                        size += 2;
-                        shortOperand = ilReader.ReadInt16();
-                        instruction = new ILDasmStringInstruction(opCode, "TO DO", shortOperand);
-                        break;
+                        /*TO DO SEPARATE BRANCH TO SHORT BRANCH TARGET*/
                     case OperandType.ShortInlineBrTarget:
-                        size += 1;
                         instruction = new ILDasmBranchInstruction(opCode, (int)ilReader.ReadByte(), ilOffset, expectedSize + 1);
                         break;
+                    case OperandType.InlineBrTarget:
+                        instruction = new ILDasmBranchInstruction(opCode, ilReader.ReadInt32(), ilOffset, expectedSize + 4);
+                        break;
                     case OperandType.ShortInlineI:
-                        size += 1;
                         instruction = new ILDasmByteInstruction(opCode, ilReader.ReadByte(), -1, expectedSize + 1);
                         break;
                     case OperandType.ShortInlineR:
-                        size += 4;
                         instruction = new ILDasmFloatInstruction(opCode, ilReader.ReadSingle(), -1, expectedSize + 4);
-                        break;
-                    case OperandType.ShortInlineVar:
-                        /*TO DO*/
-                        size += 1;
-                        instruction = new ILDasmStringInstruction(opCode, "TO DO", ilReader.ReadByte());
                         break;
                     case OperandType.InlineNone:
                         instruction = new ILDasmInstructionWithNoValue(opCode, expectedSize);
                         break;
+                    case OperandType.ShortInlineVar:
+                        /*TO DO*/
+                        instruction = new ILDasmStringInstruction(opCode, "TO DO", ilReader.ReadByte(), expectedSize + 1);
+                        break;
+                    case OperandType.InlineVar:
+                        /*TO DO*/
+                        shortOperand = ilReader.ReadInt16();
+                        instruction = new ILDasmStringInstruction(opCode, "TO DO", shortOperand, expectedSize + 2);
+                        break;
+                    case OperandType.InlineSig:
+                        /*TO DO*/
+                        intOperand = ilReader.ReadInt32();
+                        instruction = new ILDasmStringInstruction(opCode, "TO DO", intOperand, expectedSize + 4);
+                        break;
                     default:
                         break;
                 }
-                ilOffset += size;
+                ilOffset += instruction.Size;
                 instructions.Add(instruction);
             }
             return instructions.AsEnumerable<ILInstruction>();
         }
 
+        private static string GetInlineTokenType(MetadataReader mdReader, int intOperand, ILDasmTypeProvider provider)
+        {
+            if(IsMethodDefinition(intOperand) || IsMethodSpecification(intOperand) || IsMemberReference(intOperand))
+            {
+                return SolveMethodName(mdReader, intOperand, provider);
+            }
+            if (IsFieldDefinition(intOperand))
+            {
+                return GetFieldInformation(mdReader, intOperand, provider);
+            }
+            return GetTypeInformation(mdReader, intOperand, provider);
+        }
+
+        private static string GetTypeInformation(MetadataReader mdReader, int intOperand, ILDasmTypeProvider provider)
+        {
+            if(IsTypeReference(intOperand))
+            {
+                var refHandle = MetadataTokens.TypeReferenceHandle(intOperand);
+                return SignatureDecoder.DecodeType(refHandle, provider);
+            }
+            var defHandle = MetadataTokens.TypeDefinitionHandle(intOperand);
+            return SignatureDecoder.DecodeType(defHandle, provider);
+        }
+
+        private static ILInstruction CreateSwitchInstruction(ref BlobReader ilReader, int expectedSize, int ilOffset, OpCode opCode)
+        {
+            var caseNumber = ilReader.ReadUInt32();
+            int[] jumps = new int[caseNumber];
+            for(int i = 0; i < caseNumber; i++)
+            {
+                jumps[i] = ilReader.ReadInt32();
+            }
+            int size = 4 + expectedSize;
+            size += (int)caseNumber * 4;
+            return new ILDasmSwitchInstruction(opCode, ilOffset, jumps, (int)caseNumber, caseNumber, size);
+        }
+
         private static string GetArgumentString(MetadataReader mdReader, int intOperand)
         {
-            var rid = intOperand >> 24;
-            if (rid == 0x70)
+            if (IsUserString(intOperand))
             {
                 UserStringHandle usrStr = MetadataTokens.UserStringHandle(intOperand);
                 return mdReader.GetUserString(usrStr);
@@ -176,8 +233,8 @@ namespace ILDasmLibrary.Decoder
             var refParent = mdReader.GetTypeReference(MetadataTokens.TypeReferenceHandle(parentToken));
             var scopeToken = MetadataTokens.GetToken(refParent.ResolutionScope);
             var scope = mdReader.GetAssemblyReference(MetadataTokens.AssemblyReferenceHandle(scopeToken));
-            string signatureValue = "";
-            string parameters = "";
+            string signatureValue;
+            string parameters = string.Empty;
             if (reference.GetKind() == MemberReferenceKind.Method)
             {
                 MethodSignature<string> signature = SignatureDecoder.DecodeMethodSignature(reference.Signature, provider);
@@ -193,8 +250,13 @@ namespace ILDasmLibrary.Decoder
 
         private static string SolveMethodName(MetadataReader mdReader, int token, ILDasmTypeProvider provider)
         {
-            var rid = token >> 24;
-            if (rid == 0x0a)
+            if (IsMethodSpecification(token))
+            {
+                var methodHandle = MetadataTokens.MethodSpecificationHandle(token);
+                var methodSpec = mdReader.GetMethodSpecification(methodHandle);
+                token = MetadataTokens.GetToken(methodSpec.Method);
+            }
+            if (IsMemberReference(token))
             {
                 return GetMemberRef(mdReader, token, provider);
             }
@@ -209,8 +271,7 @@ namespace ILDasmLibrary.Decoder
 
         private static string GetFieldInformation(MetadataReader mdReader, int intOperand, ILDasmTypeProvider provider)
         {
-            var rid = intOperand >> 24;
-            if(rid == 0x0a)
+            if(IsMemberReference(intOperand))
             {
                 return GetMemberRef(mdReader, intOperand, provider);
             }

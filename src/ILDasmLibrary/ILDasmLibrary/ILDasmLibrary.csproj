@@ -51,7 +51,7 @@
     <Compile Include="ILDasmWriter.cs" />
     <Compile Include="ILDasmObject.cs" />
     <Compile Include="ILDasmTypeDefinition.cs" />
-    <Compile Include="Decoder\ILWriterHelpers.cs" />
+    <Compile Include="Decoder\ILDecoderHelpers.cs" />
     <Compile Include="Instructions\ILDasmBranchInstruction.cs" />
     <Compile Include="Instructions\ILDasmByteInstruction.cs" />
     <Compile Include="Instructions\ILDasmDoubleInstruction.cs" />
@@ -61,6 +61,7 @@
     <Compile Include="Instructions\ILDasmLongInstruction.cs" />
     <Compile Include="Instructions\ILDasmNumericValueInstruction.cs" />
     <Compile Include="Instructions\ILDasmStringInstruction.cs" />
+    <Compile Include="Instructions\ILDasmSwitchInstruction.cs" />
     <Compile Include="Instructions\ILInstruction.cs" />
     <Compile Include="Instructions\ILDasmInstructionWithValue.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
