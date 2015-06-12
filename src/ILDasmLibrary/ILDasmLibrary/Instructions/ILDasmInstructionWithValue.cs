@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Reflection.Emit;
 using System.Text;
-using System.Threading.Tasks;
-using System.Reflection.Emit;
 
 namespace ILDasmLibrary.Instructions
 {
@@ -39,9 +35,8 @@ namespace ILDasmLibrary.Instructions
         {
             if (showBytes)
             {
-                sb.AppendFormat("{0,-4} | ", opCode.Value.ToString("X2"));
-                sb.Append(Token.ToString("X8"));
-                return;
+                sb.AppendFormat("/* {0,-4} | ", opCode.Value.ToString("X2"));
+                sb.AppendFormat("{0,-16} */ ", Token.ToString("X8"));
             }
             sb.AppendFormat("{0,-10}", opCode);
             sb.Append(Value.ToString());

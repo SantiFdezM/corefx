@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Reflection.Metadata;
-using System.Reflection.PortableExecutable;
-using System.Diagnostics;
-using System.Collections.ObjectModel;
+using System.Text;
 
 namespace ILDasmLibrary
 {

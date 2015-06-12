@@ -1,14 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using ILDasmLibrary.Instructions;
+using System;
 using System.Text;
-using System.Threading.Tasks;
-using System.Reflection.Emit;
-using System.Reflection.Metadata.Ecma335;
-using System.Reflection.Metadata;
-using ILDasmLibrary.Instructions;
-using ILDasmLibrary.Decoder;
-using System.Reflection.Metadata.Decoding;
 
 namespace ILDasmLibrary
 {
@@ -24,14 +16,19 @@ namespace ILDasmLibrary
         {
             StringBuilder sb = new StringBuilder();
             DumpMethodDefinition(_methodDefinition, sb);
+            DumpMethodHeader(_methodDefinition, sb);
             DumpMethodBody(_methodDefinition, sb, showBytes);
             sb.AppendLine("}");
             return sb.ToString();
         }
-        
+
+        private void DumpMethodHeader(ILDasmMethodDefinition _methodDefinition, StringBuilder sb)
+        {
+            
+        }
+
         private void DumpMethodDefinition(ILDasmMethodDefinition _methodDefinition, StringBuilder sb)
         {
-            Console.WriteLine(_methodDefinition.Name);
             sb.AppendLine(_methodDefinition.GetDecodedSignature());
             sb.AppendLine("{");
         }

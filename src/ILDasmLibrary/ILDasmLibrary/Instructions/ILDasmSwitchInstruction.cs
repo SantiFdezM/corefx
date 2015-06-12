@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Reflection.Emit;
 using System.Text;
-using System.Threading.Tasks;
-using System.Reflection.Emit;
 
 namespace ILDasmLibrary.Instructions
 {
@@ -30,14 +26,22 @@ namespace ILDasmLibrary.Instructions
         {
             if (showBytes)
             {
-                sb.AppendFormat("{0,-4} | ", opCode.Value.ToString("X2"));
-                sb.Append(string.Format("{0:X2}000000", (int)Value));
-                for(int i = 0; i < Token; i++)
+                sb.AppendFormat("/* {0,-4} | ", opCode.Value.ToString("X2"));
+                string value = string.Format("{0:X2}000000", (int)Value);
+                sb.AppendFormat("{0,-16} */ ", value);
+                sb.AppendFormat("{0,-10}", opCode);
+                sb.Append("(");
+                for (int i = 0; i < Token; i++)
                 {
                     sb.AppendLine();
-                    sb.AppendFormat("{0,-14} | ", "");
-                    sb.Append(string.Format("{0:X2}000000", _jumps[i]));
+                    sb.AppendFormat("{0,12} {1,-4} | ","/*", "");
+                    value = string.Format("{0:X2}000000", _jumps[i]);
+                    sb.AppendFormat("{0,-16} */ ", value);
+                    sb.AppendFormat("{0,11}", " ");
+                    sb.Append(string.Format("IL_{0:x4},", (_ilOffset + Size + _jumps[i])));
                 }
+                sb.Length--; //Delete trailing ,
+                sb.Append(")");
                 return;
             }
             sb.AppendFormat("{0,-10}", opCode);

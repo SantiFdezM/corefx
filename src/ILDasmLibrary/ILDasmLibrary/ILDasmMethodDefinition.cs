@@ -2,8 +2,8 @@
 using ILDasmLibrary.Instructions;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
 
 namespace ILDasmLibrary
 {
@@ -15,11 +15,12 @@ namespace ILDasmLibrary
         private string _name;
         private int _rva = -1;
         private MethodSignature<string> _signature;
-        private string _attributes;
         private BlobReader _ilReader;
         private IEnumerable<ILInstruction> _instructions;
+        private IList<Local> _locals;
         private bool isIlReaderInitialized = false;
         private bool isSignatureInitialized = false;
+        private IList<ILDasmParameter> _parameters;
 
         internal ILDasmMethodDefinition(MethodDefinition methodDefinition, Readers readers) 
             : base(readers)
@@ -83,15 +84,28 @@ namespace ILDasmLibrary
             }
         }
 
-        public string Attributes
+        public bool LocalVariablesInitialized
         {
             get
             {
-               if(_attributes == null)
-                {
-                    _attributes = GetAttributes();
-                }
-                return _attributes;
+                return _methodBody.LocalVariablesInitialized;
+            }
+        }
+
+        public bool IsEntryPoint
+        {
+            get
+            {
+                //TO DO.
+                return RelativeVirtualAdress == _readers.PEReader.PEHeaders.PEHeader.AddressOfEntryPoint;
+            }
+        }
+
+        public MethodAttributes Attributes
+        {
+            get
+            {
+                return _methodDefinition.Attributes;
             }
         }
 
@@ -123,6 +137,30 @@ namespace ILDasmLibrary
             }
         }
 
+        public IList<Local> Locals
+        {
+            get
+            {
+                if(_locals == null)
+                {
+                    _locals = ILDasmDecoder.DecodeLocalSignature(_methodBody.LocalSignature, _methodBody.LocalVariablesInitialized, _readers.MdReader, _provider);
+                }
+                return _locals;
+            }
+        }
+
+        public IList<ILDasmParameter> Parameters
+        {
+            get
+            {
+                if(_parameters == null)
+                {
+                    _parameters = ILDasmDecoder.DecodeParameters(Signature, _methodDefinition.GetParameters(), _readers.MdReader);
+                }
+                return _parameters;
+            }
+        }
+
         public string GetDecodedSignature()
         {
             return String.Format(".method {0} {1}{2}", Signature.ReturnType, Name, _provider.GetParameterList(Signature, _methodDefinition.GetParameters()));
@@ -131,11 +169,6 @@ namespace ILDasmLibrary
         public string DumpMethod(bool showBytes = false)
         {
             return new ILDasmWriter().DumpMethod(this, showBytes);
-        }
-
-        private string GetAttributes()
-        {
-            return _methodDefinition.Attributes.ToString();
         }
 
         public string GetFormattedRva()

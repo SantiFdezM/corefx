@@ -45,6 +45,8 @@
   <ItemGroup>
     <Compile Include="Decoder\ILDasmDecoder.cs" />
     <Compile Include="Decoder\ILDasmTypeProvider.cs" />
+    <Compile Include="ILDasmParameter.cs" />
+    <Compile Include="Instructions\ILDasmVariableInstruction.cs" />
     <Compile Include="ILDasm.cs" />
     <Compile Include="ILDasmAssembly.cs" />
     <Compile Include="ILDasmMethodDefinition.cs" />
@@ -60,10 +62,13 @@
     <Compile Include="Instructions\ILDasmIntInstruction.cs" />
     <Compile Include="Instructions\ILDasmLongInstruction.cs" />
     <Compile Include="Instructions\ILDasmNumericValueInstruction.cs" />
+    <Compile Include="Instructions\ILDasmShortBranchInstruction.cs" />
+    <Compile Include="Instructions\ILDasmShortVariableInstruction.cs" />
     <Compile Include="Instructions\ILDasmStringInstruction.cs" />
     <Compile Include="Instructions\ILDasmSwitchInstruction.cs" />
     <Compile Include="Instructions\ILInstruction.cs" />
     <Compile Include="Instructions\ILDasmInstructionWithValue.cs" />
+    <Compile Include="Local.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Readers.cs" />
   </ItemGroup>

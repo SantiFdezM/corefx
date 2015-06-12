@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Decoding;
-using System.Reflection.Metadata.Ecma335;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace ILDasmLibrary.Decoder
 {
@@ -178,9 +174,9 @@ namespace ILDasmLibrary.Decoder
                 case PrimitiveTypeCode.Char:
                     return "char";
                 case PrimitiveTypeCode.Single:
-                    return "float";
+                    return "float32";
                 case PrimitiveTypeCode.Double:
-                    return "double";
+                    return "float64";
                 case PrimitiveTypeCode.Int16:
                     return "int16";
                 case PrimitiveTypeCode.Int32:
@@ -265,7 +261,7 @@ namespace ILDasmLibrary.Decoder
             return sb.ToString();
         }
 
-        private string[] GetParameterNames(ParameterHandleCollection? parameters, int requiredCount)
+        internal string[] GetParameterNames(ParameterHandleCollection? parameters, int requiredCount)
         {
             if(parameters == null || requiredCount == 0)
             {

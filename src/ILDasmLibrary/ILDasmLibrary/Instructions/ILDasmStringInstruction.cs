@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Reflection.Emit;
 using System.Text;
-using System.Threading.Tasks;
-using System.Reflection.Emit;
 
 namespace ILDasmLibrary.Instructions
 {
@@ -18,11 +14,11 @@ namespace ILDasmLibrary.Instructions
         {
             if (showBytes)
             {
-                sb.AppendFormat(opCode.OperandType == OperandType.InlineNone ? "{0}" : "{0,-4} | ", opCode.Value.ToString("X2"));
-                sb.Append(string.Format("({0}){1}",(Token >> 24).ToString("X2"),Token.ToString("X8").Substring(2)));
-                return;
+                sb.AppendFormat("/* {0,-4} | ", opCode.Value.ToString("X2"));
+                string tokenValue = string.Format("({0}){1}", (Token >> 24).ToString("X2"), Token.ToString("X8").Substring(2));
+                sb.AppendFormat("{0,-16} */ ", tokenValue);
             }
-            sb.AppendFormat(opCode.OperandType == OperandType.InlineNone ? "{0}" : "{0,-10}", opCode);
+            sb.AppendFormat("{0,-10}", opCode);
             if(Token >> 24 == 0x70)
             {
                 sb.AppendFormat("\"{0}\"", Value);
