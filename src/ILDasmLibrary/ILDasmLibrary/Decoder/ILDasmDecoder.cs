@@ -52,44 +52,54 @@ namespace ILDasmLibrary.Decoder
             return (token >> 24) == 0x04;
         }
 
-        public static bool IsArgument(OpCode opCode)
+        public static bool IsTypeSpecification(int token)
         {
-            bool isLd = opCode == OpCodes.Ldarg || opCode == OpCodes.Ldarga || opCode == OpCodes.Ldarga_S || opCode == OpCodes.Ldarg_S;
-            bool isArg = opCode == OpCodes.Starg_S || opCode == OpCodes.Starg;
-            return isLd || isArg;
+            return (token >> 24) == 0x1b;
         }
 
-        internal static IList<Local> DecodeLocalSignature(StandaloneSignatureHandle localHandle, bool hasLocals, MetadataReader mdReader, ILDasmTypeProvider provider)
+        public static bool IsStandaloneSignature(int token)
         {
-            if (!hasLocals)
+            return (token >> 24) == 0x11;
+        }
+
+        public static bool HasArgument(OpCode opCode)
+        {
+            bool isLoad = opCode == OpCodes.Ldarg || opCode == OpCodes.Ldarga || opCode == OpCodes.Ldarga_S || opCode == OpCodes.Ldarg_S;
+            bool isStore = opCode == OpCodes.Starg_S || opCode == OpCodes.Starg;
+            return isLoad || isStore;
+        }
+
+        internal static ILDasmLocal[] DecodeLocalSignature(MethodBodyBlock methodBody, MetadataReader mdReader, ILDasmTypeProvider provider)
+        {
+            if (!methodBody.LocalVariablesInitialized)
             {
-                return new List<Local>();
+                return new ILDasmLocal[0];
             }
-            IList<Local> locals = new List<Local>();
-            var localTypes = SignatureDecoder.DecodeLocalSignature(localHandle, provider);
+            var localTypes = SignatureDecoder.DecodeLocalSignature(methodBody.LocalSignature, provider);
+            ILDasmLocal[] locals = new ILDasmLocal[localTypes.Count()];
             int i = 0;
             foreach(var localType in localTypes)
             {
-                string name = "V_" + i++;
-                locals.Add(new Local(name, localType));
+                string name = "V_" + i;
+                locals[i++] = new ILDasmLocal(name, localType);
             }
             return locals;
         }
 
-        internal static IList<ILDasmParameter> DecodeParameters(MethodSignature<string> signature, ParameterHandleCollection parameters, MetadataReader mdReader)
+        internal static ILDasmParameter[] DecodeParameters(MethodSignature<string> signature, ParameterHandleCollection parameters, MetadataReader mdReader)
         {
             var types = signature.ParameterTypes;
             int requiredCount = Math.Min(signature.RequiredParameterCount, types.Length);
             if (requiredCount == 0)
             {
-                return new List<ILDasmParameter>();
+                return new ILDasmParameter[0];
             }
-            IList<ILDasmParameter> result = new List<ILDasmParameter>();
+            ILDasmParameter[] result = new ILDasmParameter[requiredCount];
             for(int i=0; i < requiredCount; i++)
             {
                 var parameter = mdReader.GetParameter(parameters.ElementAt(i));
                 bool isOptional = parameter.Attributes.HasFlag(ParameterAttributes.Optional);
-                result.Add(new ILDasmParameter(mdReader.GetString(parameter.Name), types[i], isOptional));
+                result[i] = new ILDasmParameter(mdReader.GetString(parameter.Name), types[i], isOptional);
             }
             return result;
         }
@@ -108,7 +118,7 @@ namespace ILDasmLibrary.Decoder
         {
             ilReader.Reset();
             int intOperand;
-            short shortOperand;
+            ushort shortOperand;
             int ilOffset = 0;
             IList<ILInstruction> instructions = new List<ILInstruction>();
             ILInstruction instruction = null;
@@ -186,16 +196,16 @@ namespace ILDasmLibrary.Decoder
                         break;
                     case OperandType.ShortInlineVar:
                         byte token = ilReader.ReadByte();
-                        instruction = new ILDasmShortVariableInstruction(opCode, GetVariableName(opCode, (int)token, _methodDefinition), token, expectedSize + 1);
+                        instruction = new ILDasmShortVariableInstruction(opCode, GetVariableName(opCode, token, _methodDefinition), token, expectedSize + 1);
                         break;
                     case OperandType.InlineVar:
-                        shortOperand = ilReader.ReadInt16();
-                        instruction = new ILDasmVariableInstruction(opCode, GetVariableName(opCode, (int)shortOperand, _methodDefinition), shortOperand, expectedSize + 2);
+                        shortOperand = ilReader.ReadUInt16();
+                        instruction = new ILDasmVariableInstruction(opCode, GetVariableName(opCode, shortOperand, _methodDefinition), shortOperand, expectedSize + 2);
                         break;
                     case OperandType.InlineSig:
                         /*TO DO*/
                         intOperand = ilReader.ReadInt32();
-                        instruction = new ILDasmStringInstruction(opCode, "TO DO", intOperand, expectedSize + 4);
+                        instruction = new ILDasmStringInstruction(opCode, GetSignature(mdReader, intOperand, provider), intOperand, expectedSize + 4);
                         break;
                     default:
                         break;
@@ -206,15 +216,29 @@ namespace ILDasmLibrary.Decoder
             return instructions.AsEnumerable<ILInstruction>();
         }
 
-        
+        private static string GetSignature(MetadataReader mdReader, int intOperand, ILDasmTypeProvider provider)
+        {
+            if (IsStandaloneSignature(intOperand))
+            {
+                var handle = MetadataTokens.StandaloneSignatureHandle(intOperand);
+                var standaloneSignature = mdReader.GetStandaloneSignature(handle);
+                var signature = SignatureDecoder.DecodeMethodSignature(standaloneSignature.Signature, provider);
+                return string.Format("{0}{1}", GetMethodReturnType(signature), provider.GetParameterList(signature));
+            }
+            throw new Exception("Get signature invalid token");
+        }
 
         private static string GetVariableName(OpCode opCode,int token, ILDasmMethodDefinition _methodDefinition)
         {
-            if (IsArgument(opCode))
+            if (HasArgument(opCode))
             {
-                return _methodDefinition.Parameters[token].Name;
+                if (_methodDefinition.Signature.Header.IsInstance)
+                {
+                    token--;
+                }
+                return _methodDefinition.GetParameter(token).Name;
             }
-            return _methodDefinition.Locals[token].Name;
+            return _methodDefinition.GetLocal(token).Name;
             
         }
 
@@ -260,12 +284,13 @@ namespace ILDasmLibrary.Decoder
             if (IsUserString(intOperand))
             {
                 UserStringHandle usrStr = MetadataTokens.UserStringHandle(intOperand);
-                return mdReader.GetUserString(usrStr);
+                var str = mdReader.GetUserString(usrStr);
+                return str;
             }
             throw new NotImplementedException("Argument String");
         }
 
-        private static string GetMethodReturnType(MethodSignature<string> signature, ILDasmTypeProvider provider)
+        private static string GetMethodReturnType(MethodSignature<string> signature)
         {
             StringBuilder sb = new StringBuilder();
             if (signature.Header.IsInstance)
@@ -281,22 +306,34 @@ namespace ILDasmLibrary.Decoder
             var refHandle = MetadataTokens.MemberReferenceHandle(token);
             var reference = mdReader.GetMemberReference(refHandle);
             var parentToken = MetadataTokens.GetToken(reference.Parent);
-            var refParent = mdReader.GetTypeReference(MetadataTokens.TypeReferenceHandle(parentToken));
-            var scopeToken = MetadataTokens.GetToken(refParent.ResolutionScope);
-            var scope = mdReader.GetAssemblyReference(MetadataTokens.AssemblyReferenceHandle(scopeToken));
+            string type;
+            if (IsTypeSpecification(parentToken))
+            {
+                var typeSpecificationHandle = MetadataTokens.TypeSpecificationHandle(parentToken);
+                var typeSpecification = mdReader.GetTypeSpecification(typeSpecificationHandle);
+                type = SignatureDecoder.DecodeType(typeSpecificationHandle, provider);
+            }
+            else
+            {
+                var parentHandle = MetadataTokens.TypeReferenceHandle(parentToken);
+                var refParent = mdReader.GetTypeReference(parentHandle);
+                var scopeToken = MetadataTokens.GetToken(refParent.ResolutionScope);
+                var scope = mdReader.GetAssemblyReference(MetadataTokens.AssemblyReferenceHandle(scopeToken));
+                type = string.Format("{[0]}{1}.{3}", GetString(mdReader, scope.Name), GetString(mdReader, refParent.Namespace), GetString(mdReader, refParent.Name));
+            }
             string signatureValue;
             string parameters = string.Empty;
             if (reference.GetKind() == MemberReferenceKind.Method)
             {
                 MethodSignature<string> signature = SignatureDecoder.DecodeMethodSignature(reference.Signature, provider);
-                signatureValue = GetMethodReturnType(signature, provider);
+                signatureValue = GetMethodReturnType(signature);
                 parameters = provider.GetParameterList(signature);
             }
             else
             {
                 signatureValue = SignatureDecoder.DecodeFieldSignature(reference.Signature, provider);
             }
-            return String.Format("{0} [{1}]{2}.{3}::{4}{5}", signatureValue, GetString(mdReader, scope.Name), GetString(mdReader, refParent.Namespace), GetString(mdReader, refParent.Name), GetString(mdReader, reference.Name), parameters);
+            return String.Format("{0} {1}::{2}{3}", signatureValue,type, GetString(mdReader, reference.Name), parameters);
         }
 
         private static string SolveMethodName(MetadataReader mdReader, int token, ILDasmTypeProvider provider)
@@ -315,7 +352,7 @@ namespace ILDasmLibrary.Decoder
             var definition = mdReader.GetMethodDefinition(handle);
             var parent = mdReader.GetTypeDefinition(definition.GetDeclaringType());
             MethodSignature<string> signature = SignatureDecoder.DecodeMethodSignature(definition.Signature, provider);
-            var returnType = GetMethodReturnType(signature, provider);
+            var returnType = GetMethodReturnType(signature);
             var parameters = provider.GetParameterList(signature);
             return String.Format("{0} {1}.{2}::{3}{4}", returnType, GetString(mdReader, parent.Namespace), GetString(mdReader, parent.Name), GetString(mdReader, definition.Name), parameters);
         }

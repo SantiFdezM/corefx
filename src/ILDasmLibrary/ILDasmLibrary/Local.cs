@@ -1,11 +1,11 @@
 ﻿namespace ILDasmLibrary
 {
-    public struct Local
+    public struct ILDasmLocal
     {
         private readonly string _name;
         private readonly string _type;
 
-        public Local(string name, string type)
+        public ILDasmLocal(string name, string type)
         {
             _name = name;
             _type = type;

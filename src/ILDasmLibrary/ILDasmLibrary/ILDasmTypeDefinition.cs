@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 
 namespace ILDasmLibrary
 {
@@ -52,7 +53,7 @@ namespace ILDasmLibrary
             foreach(var handle in handles)
             {
                 var method = _readers.MdReader.GetMethodDefinition(handle);
-                _methodDefinitions.Add(new ILDasmMethodDefinition(method, _readers));
+                _methodDefinitions.Add(new ILDasmMethodDefinition(method,MetadataTokens.GetToken(handle),_readers));
             }
         }
     }

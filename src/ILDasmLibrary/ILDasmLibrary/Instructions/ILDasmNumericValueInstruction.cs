@@ -15,8 +15,7 @@ namespace ILDasmLibrary.Instructions
         {
             if (showBytes)
             {
-                sb.AppendFormat("/* {0,-4} | ", opCode.Value.ToString("X2"));
-                sb.AppendFormat("{0,-16} */ ",Bytes);
+                DumpBytes(sb, Bytes);
             }
             base.Dump(sb);
         }

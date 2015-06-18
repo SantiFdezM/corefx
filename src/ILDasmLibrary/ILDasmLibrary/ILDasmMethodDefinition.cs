@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 
 namespace ILDasmLibrary
 {
@@ -17,16 +18,19 @@ namespace ILDasmLibrary
         private MethodSignature<string> _signature;
         private BlobReader _ilReader;
         private IEnumerable<ILInstruction> _instructions;
-        private IList<Local> _locals;
+        private ILDasmLocal[] _locals;
         private bool isIlReaderInitialized = false;
         private bool isSignatureInitialized = false;
-        private IList<ILDasmParameter> _parameters;
+        private ILDasmParameter[] _parameters;
+        private int _token;
 
-        internal ILDasmMethodDefinition(MethodDefinition methodDefinition, Readers readers) 
+        internal ILDasmMethodDefinition(MethodDefinition methodDefinition, int token, Readers readers) 
             : base(readers)
         {
             _methodDefinition = methodDefinition;
-            _methodBody = _readers.PEReader.GetMethodBody(this.RelativeVirtualAdress);
+            _token = token;
+            if(RelativeVirtualAdress != 0)
+                _methodBody = _readers.PEReader.GetMethodBody(this.RelativeVirtualAdress);
             _provider = new ILDasmTypeProvider(readers.MdReader);
         }
 
@@ -92,12 +96,19 @@ namespace ILDasmLibrary
             }
         }
 
+        public bool HasLocals
+        {
+            get
+            {
+                return !_methodBody.LocalSignature.IsNil;
+            }
+        }
+
         public bool IsEntryPoint
         {
             get
             {
-                //TO DO.
-                return RelativeVirtualAdress == _readers.PEReader.PEHeaders.PEHeader.AddressOfEntryPoint;
+                return _token == _readers.PEReader.PEHeaders.CorHeader.EntryPointTokenOrRelativeVirtualAddress;
             }
         }
 
@@ -113,7 +124,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                return _methodBody.Size;
+                return IlReader.Length;
             }
         }
 
@@ -137,33 +148,63 @@ namespace ILDasmLibrary
             }
         }
 
-        public IList<Local> Locals
+        public IEnumerable<ILDasmParameter> Parameters
         {
             get
             {
-                if(_locals == null)
-                {
-                    _locals = ILDasmDecoder.DecodeLocalSignature(_methodBody.LocalSignature, _methodBody.LocalVariablesInitialized, _readers.MdReader, _provider);
-                }
-                return _locals;
+                return GetParameters();
             }
         }
 
-        public IList<ILDasmParameter> Parameters
+        
+
+        public IEnumerable<ILDasmLocal> Locals
         {
             get
             {
-                if(_parameters == null)
-                {
-                    _parameters = ILDasmDecoder.DecodeParameters(Signature, _methodDefinition.GetParameters(), _readers.MdReader);
-                }
-                return _parameters;
+                return GetLocals();
             }
+        }
+
+        private ILDasmParameter[] GetParameters()
+        {
+            if (_parameters == null)
+            {
+                _parameters = ILDasmDecoder.DecodeParameters(Signature, _methodDefinition.GetParameters(), _readers.MdReader);
+            }
+            return _parameters;
+        }
+
+        private ILDasmLocal[] GetLocals()
+        {
+            if (_locals == null)
+            {
+                _locals = ILDasmDecoder.DecodeLocalSignature(_methodBody, _readers.MdReader, _provider);
+            }
+            return _locals;
+        }
+
+        public ILDasmLocal GetLocal(int index)
+        {
+            if(index < 0 || index >= GetLocals().Length)
+            {
+                throw new IndexOutOfRangeException("Index out of bounds trying to get local");
+            }
+            return GetLocals()[index];
+        }
+
+        public ILDasmParameter GetParameter(int index)
+        {
+            if(index < 0 || index >= GetParameters().Length)
+            {
+                throw new IndexOutOfRangeException("Index out of bounds trying to get parameter.");
+            }
+            return GetParameters()[index];
         }
 
         public string GetDecodedSignature()
         {
-            return String.Format(".method {0} {1}{2}", Signature.ReturnType, Name, _provider.GetParameterList(Signature, _methodDefinition.GetParameters()));
+            return String.Format(".method {0} {1} {2}{3}",Attributes.ToString(), Signature.ReturnType, Name, _provider.GetParameterList(Signature, _methodDefinition.GetParameters()));
         }
 
         public string DumpMethod(bool showBytes = false)
