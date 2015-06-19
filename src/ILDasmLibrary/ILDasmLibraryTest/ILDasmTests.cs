@@ -12,11 +12,11 @@ namespace ILDasmLibraryTest
         [TestMethod]
         public void TestMethod1()
         {
+            Stopwatch watch = new Stopwatch();
+            int i = 0;
             try
             {
-                Stopwatch watch = new Stopwatch();
-                watch.Start();
-                string path = @"C:\Windows\Microsoft.NET\Framework\v4.0.30319\mscorlib.dll";
+                string path = "Assemblies/Class1.ilexe";
                 if (!File.Exists(path))
                 {
                     Assert.Fail("File not found");
@@ -24,21 +24,23 @@ namespace ILDasmLibraryTest
                 }
                 var ildasm = new ILDasm(path);
                 var types = ildasm.Assembly.TypeDefinitions;
-                Debug.WriteLine(ildasm.Assembly.PublicKey);
-                int i = 0;
-                foreach (var type in types)
+                watch.Start();
+                using (StreamWriter file = new StreamWriter("../../Output/foo.il"))
                 {
-                    var methods = type.MethodDefinitions;
-                    foreach (var method in methods)
+                    foreach (var type in types)
                     {
-                        string me = method.DumpMethod(true);
-                        Console.WriteLine("parsed");
-                        i++;
+                        var methods = type.MethodDefinitions;
+                        foreach (var method in methods)
+                        {
+                            string me = method.DumpMethod(true);
+                            file.WriteLine(me);
+                            i++;
+                        }
                     }
+                    watch.Stop();
+                    file.WriteLine("Time elapsed: " + watch.Elapsed);
+                    file.WriteLine("Methods Parsed: " + i);
                 }
-                Console.WriteLine("Methods parsed: " + i);
-                watch.Stop();
-                Console.WriteLine("Time: " + watch.Elapsed);
             }
             catch (Exception e)
             {

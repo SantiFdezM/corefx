@@ -72,17 +72,16 @@ namespace ILDasmLibrary.Decoder
 
         internal static ILDasmLocal[] DecodeLocalSignature(MethodBodyBlock methodBody, MetadataReader mdReader, ILDasmTypeProvider provider)
         {
-            if (!methodBody.LocalVariablesInitialized)
+            if (methodBody.LocalSignature.IsNil)
             {
                 return new ILDasmLocal[0];
             }
             var localTypes = SignatureDecoder.DecodeLocalSignature(methodBody.LocalSignature, provider);
             ILDasmLocal[] locals = new ILDasmLocal[localTypes.Count()];
-            int i = 0;
-            foreach(var localType in localTypes)
+            for(int i=0; i < localTypes.Length; i++)
             {
                 string name = "V_" + i;
-                locals[i++] = new ILDasmLocal(name, localType);
+                locals[i] = new ILDasmLocal(name, localTypes[i]);
             }
             return locals;
         }
@@ -251,7 +250,7 @@ namespace ILDasmLibrary.Decoder
                 var signature = SignatureDecoder.DecodeMethodSignature(standaloneSignature.Signature, provider);
                 return string.Format("{0}{1}", GetMethodReturnType(signature), provider.GetParameterList(signature));
             }
-            throw new Exception("Get signature invalid token");
+            throw new ArgumentException("Get signature invalid token");
         }
 
         private static string GetVariableName(OpCode opCode,int token, ILDasmMethodDefinition _methodDefinition)

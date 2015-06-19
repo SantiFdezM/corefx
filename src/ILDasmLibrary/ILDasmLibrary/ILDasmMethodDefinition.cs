@@ -178,58 +178,48 @@ namespace ILDasmLibrary
             }
         }
 
-        public IEnumerable<ILDasmParameter> Parameters
+        public ILDasmParameter[] Parameters
         {
             get
             {
-                return GetParameters();
+                if (_parameters == null)
+                {
+                    _parameters = ILDasmDecoder.DecodeParameters(Signature, _methodDefinition.GetParameters(), _readers.MdReader);
+                }
+                return _parameters;
             }
         }
 
         
 
-        public IEnumerable<ILDasmLocal> Locals
+        public ILDasmLocal[] Locals
         {
             get
             {
-                return GetLocals();
+                if (_locals == null)
+                {
+                    _locals = ILDasmDecoder.DecodeLocalSignature(_methodBody, _readers.MdReader, _provider);
+                }
+                return _locals;
             }
-        }
-
-        private ILDasmParameter[] GetParameters()
-        {
-            if (_parameters == null)
-            {
-                _parameters = ILDasmDecoder.DecodeParameters(Signature, _methodDefinition.GetParameters(), _readers.MdReader);
-            }
-            return _parameters;
-        }
-
-        private ILDasmLocal[] GetLocals()
-        {
-            if (_locals == null)
-            {
-                _locals = ILDasmDecoder.DecodeLocalSignature(_methodBody, _readers.MdReader, _provider);
-            }
-            return _locals;
         }
 
         public ILDasmLocal GetLocal(int index)
         {
-            if(index < 0 || index >= GetLocals().Length)
+            if(index < 0 || index >= Locals.Length)
             {
                 throw new IndexOutOfRangeException("Index out of bounds trying to get local");
             }
-            return GetLocals()[index];
+            return Locals[index];
         }
 
         public ILDasmParameter GetParameter(int index)
         {
-            if(index < 0 || index >= GetParameters().Length)
+            if(index < 0 || index >= Parameters.Length)
             {
                 throw new IndexOutOfRangeException("Index out of bounds trying to get parameter.");
             }
-            return GetParameters()[index];
+            return Parameters[index];
         }
 
         public string GetDecodedSignature()

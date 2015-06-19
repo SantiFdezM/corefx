@@ -1,5 +1,6 @@
 ﻿using ILDasmLibrary.Decoder;
 using ILDasmLibrary.Instructions;
+using System.Collections.Immutable;
 using System.Text;
 
 namespace ILDasmLibrary
@@ -141,6 +142,11 @@ namespace ILDasmLibrary
                 }
                 DumpInstruction(instruction, sb, ref ilOffset, showBytes);
             }
+        }
+
+        private void DumpExceptionRegionsBeforeFinally(ImmutableArray<ILInstruction> instructions, StringBuilder sb, int finallyIndex, ref int ilOffset, ref int regionIndex)
+        {
+
         }
 
         private void DumpInstruction(ILInstruction instruction, StringBuilder sb, ref int ilOffset, bool showBytes)
