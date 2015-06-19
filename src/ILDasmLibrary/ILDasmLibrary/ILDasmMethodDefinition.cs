@@ -2,6 +2,7 @@
 using ILDasmLibrary.Instructions;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -17,12 +18,13 @@ namespace ILDasmLibrary
         private int _rva = -1;
         private MethodSignature<string> _signature;
         private BlobReader _ilReader;
-        private IEnumerable<ILInstruction> _instructions;
+        private ImmutableArray<ILInstruction> _instructions;
         private ILDasmLocal[] _locals;
         private bool isIlReaderInitialized = false;
         private bool isSignatureInitialized = false;
         private ILDasmParameter[] _parameters;
         private int _token;
+        private IEnumerable<CustomAttribute> _customAttributes;
 
         internal ILDasmMethodDefinition(MethodDefinition methodDefinition, int token, Readers readers) 
             : base(readers)
@@ -75,6 +77,14 @@ namespace ILDasmLibrary
             }
         }
 
+        public int Token
+        {
+            get
+            {
+                return _token;
+            }
+        }
+
         public MethodSignature<string> Signature
         {
             get
@@ -120,6 +130,26 @@ namespace ILDasmLibrary
             }
         }
 
+        public IEnumerable<CustomAttribute> CustomAttributes
+        {
+            get
+            {
+                if(_customAttributes == null)
+                {
+                    _customAttributes = PopulateCustomAttributes();
+                }
+                return _customAttributes;
+            }
+        }
+
+        public ImmutableArray<ExceptionRegion> ExceptionRegions
+        {
+            get
+            {
+                return _methodBody.ExceptionRegions;
+            }
+        }
+
         public int Size
         {
             get
@@ -136,13 +166,13 @@ namespace ILDasmLibrary
             }
         }
 
-        public IEnumerable<ILInstruction> Instructions
+        public ImmutableArray<ILInstruction> Instructions
         {
             get
             {
                 if(_instructions == null)
                 {
-                    _instructions = ILDasmDecoder.DecodeMethodBody(this);
+                    _instructions = ILDasmDecoder.DecodeMethodBody(this).ToImmutableArray<ILInstruction>();
                 }
                 return _instructions;
             }
@@ -204,7 +234,7 @@ namespace ILDasmLibrary
 
         public string GetDecodedSignature()
         {
-            return String.Format(".method {0} {1} {2}{3}",Attributes.ToString(), Signature.ReturnType, Name, _provider.GetParameterList(Signature, _methodDefinition.GetParameters()));
+            return String.Format(".method /*{0}*/ {1} {2} {3}{4}",Token.ToString("X8"),Attributes.ToString(), Signature.ReturnType, Name, _provider.GetParameterList(Signature, _methodDefinition.GetParameters()));
         }
 
         public string DumpMethod(bool showBytes = false)
@@ -215,6 +245,15 @@ namespace ILDasmLibrary
         public string GetFormattedRva()
         {
             return string.Format("0x{0:x8}", RelativeVirtualAdress);
+        }
+
+        private IEnumerable<CustomAttribute> PopulateCustomAttributes()
+        {
+            foreach(var handle in _methodDefinition.GetCustomAttributes())
+            {
+                var attribute = _readers.MdReader.GetCustomAttribute(handle);
+                yield return attribute;
+            }
         }
     }
 }

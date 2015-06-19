@@ -69,7 +69,7 @@
     <Compile Include="Instructions\ILDasmSwitchInstruction.cs" />
     <Compile Include="Instructions\ILInstruction.cs" />
     <Compile Include="Instructions\ILDasmInstructionWithValue.cs" />
-    <Compile Include="Local.cs" />
+    <Compile Include="ILDasmLocal.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Readers.cs" />
   </ItemGroup>

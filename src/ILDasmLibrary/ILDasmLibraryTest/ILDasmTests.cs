@@ -16,12 +16,13 @@ namespace ILDasmLibraryTest
             {
                 Stopwatch watch = new Stopwatch();
                 watch.Start();
-                if (!File.Exists(@"C:\Users\t-safer\Desktop\Class1.ilexe"))
+                string path = @"C:\Windows\Microsoft.NET\Framework\v4.0.30319\mscorlib.dll";
+                if (!File.Exists(path))
                 {
-                    Debug.WriteLine("Doesn't exist");
+                    Assert.Fail("File not found");
                     return;
                 }
-                var ildasm = new ILDasm(@"C:\Users\t-safer\Desktop\Class1.ilexe");
+                var ildasm = new ILDasm(path);
                 var types = ildasm.Assembly.TypeDefinitions;
                 Debug.WriteLine(ildasm.Assembly.PublicKey);
                 int i = 0;

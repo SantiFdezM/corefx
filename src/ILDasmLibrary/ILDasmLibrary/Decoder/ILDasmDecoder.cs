@@ -1,6 +1,7 @@
 ﻿using ILDasmLibrary.Instructions;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -104,6 +105,34 @@ namespace ILDasmLibrary.Decoder
             return result;
         }
 
+        public static string DecodeCustomAttribute(CustomAttribute attribute, ILDasmMethodDefinition _methodDefinition)
+        {
+            switch(attribute.Constructor.Kind)
+            {
+                case HandleKind.MemberReference:
+                case HandleKind.MethodDefinition:
+                case HandleKind.MethodSpecification:
+                    break;
+                default:
+                    throw new Exception("Decoding custom attribute handle kind: " + attribute.Constructor.Kind);
+            }
+            var method = SolveMethodName(_methodDefinition._readers.MdReader, MetadataTokens.GetToken(attribute.Constructor), _methodDefinition.Provider);
+            return string.Format("{0} = ({1})", method, GetCustomAttributeBytes(attribute,_methodDefinition._readers.MdReader));
+        }
+
+        public static string GetCustomAttributeBytes(CustomAttribute attribute, MetadataReader MdReader)
+        {
+            if (attribute.Value.IsNil) return string.Empty;
+            var blobReader = MdReader.GetBlobReader(attribute.Value);
+            StringBuilder sb = new StringBuilder();
+            while(blobReader.Offset < blobReader.Length)
+            {
+                sb.Append(" ");
+                sb.Append(blobReader.ReadByte().ToString("X2"));
+            }
+            return sb.ToString();
+        }
+
         internal static MethodSignature<string> DecodeMethodSignature(MethodDefinition _methodDefinition, ILDasmTypeProvider _provider)
         {
             return SignatureDecoder.DecodeMethodSignature(_methodDefinition.Signature, _provider);
@@ -120,7 +149,6 @@ namespace ILDasmLibrary.Decoder
             int intOperand;
             ushort shortOperand;
             int ilOffset = 0;
-            IList<ILInstruction> instructions = new List<ILInstruction>();
             ILInstruction instruction = null;
             while (ilReader.Offset < ilReader.Length)
             {
@@ -203,7 +231,6 @@ namespace ILDasmLibrary.Decoder
                         instruction = new ILDasmVariableInstruction(opCode, GetVariableName(opCode, shortOperand, _methodDefinition), shortOperand, expectedSize + 2);
                         break;
                     case OperandType.InlineSig:
-                        /*TO DO*/
                         intOperand = ilReader.ReadInt32();
                         instruction = new ILDasmStringInstruction(opCode, GetSignature(mdReader, intOperand, provider), intOperand, expectedSize + 4);
                         break;
@@ -211,9 +238,8 @@ namespace ILDasmLibrary.Decoder
                         break;
                 }
                 ilOffset += instruction.Size;
-                instructions.Add(instruction);
+                yield return instruction;
             }
-            return instructions.AsEnumerable<ILInstruction>();
         }
 
         private static string GetSignature(MetadataReader mdReader, int intOperand, ILDasmTypeProvider provider)
@@ -319,7 +345,7 @@ namespace ILDasmLibrary.Decoder
                 var refParent = mdReader.GetTypeReference(parentHandle);
                 var scopeToken = MetadataTokens.GetToken(refParent.ResolutionScope);
                 var scope = mdReader.GetAssemblyReference(MetadataTokens.AssemblyReferenceHandle(scopeToken));
-                type = string.Format("{[0]}{1}.{3}", GetString(mdReader, scope.Name), GetString(mdReader, refParent.Namespace), GetString(mdReader, refParent.Name));
+                type = string.Format("[{0}]{1}.{2}", GetString(mdReader, scope.Name), GetString(mdReader, refParent.Namespace), GetString(mdReader, refParent.Name));
             }
             string signatureValue;
             string parameters = string.Empty;
