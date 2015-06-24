@@ -35,11 +35,24 @@ namespace ILDasmLibrary.Decoder
 
         private string GetName(TypeDefinition type)
         {
+            var declType = type.BaseType;
+            string declName = string.Empty;
+            //if (!declType.IsNil)
+            //{
+            //    if(declType.Kind == HandleKind.TypeDefinition)
+            //    {
+            //        declName = GetFullName((TypeDefinitionHandle)declType);
+            //    }
+            //    if(declType.Kind == HandleKind.TypeReference)
+            //    {
+            //        declName = GetFullName((TypeReferenceHandle)declType);
+            //    }
+            //}
             if (type.Namespace.IsNil)
             {
                 return Reader.GetString(type.Name);
             }
-            return String.Format("{0}.{1}", Reader.GetString(type.Namespace), Reader.GetString(type.Name));
+            return String.Format("{0} {1}.{2}", declName, Reader.GetString(type.Namespace), Reader.GetString(type.Name));
         }
 
         private string GetFullName(TypeDefinitionHandle handle)
@@ -243,7 +256,7 @@ namespace ILDasmLibrary.Decoder
                 sb.Append(types[i]);
                 if (parameterNames != null)
                 {
-                    sb.AppendFormat(" {0}", parameterNames[i]);
+                    sb.AppendFormat(" '{0}'", parameterNames[i]);
                 }
             }
 

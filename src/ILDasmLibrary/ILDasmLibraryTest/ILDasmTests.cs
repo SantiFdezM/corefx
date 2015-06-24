@@ -16,7 +16,7 @@ namespace ILDasmLibraryTest
             int i = 0;
             try
             {
-                string path = "Assemblies/Class1.ilexe";
+                string path = "Assemblies/mscorlib.dll";
                 if (!File.Exists(path))
                 {
                     Assert.Fail("File not found");

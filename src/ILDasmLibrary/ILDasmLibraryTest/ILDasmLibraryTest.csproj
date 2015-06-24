@@ -65,6 +65,11 @@
     </None>
     <None Include="Output\foo.il" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assemblies\mscorlib.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

@@ -6,6 +6,7 @@ using System.Collections.Immutable;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+using System.Text;
 
 namespace ILDasmLibrary
 {
@@ -25,6 +26,7 @@ namespace ILDasmLibrary
         private ILDasmParameter[] _parameters;
         private int _token;
         private IEnumerable<CustomAttribute> _customAttributes;
+        private IEnumerable<string> _genericParameters;
 
         internal ILDasmMethodDefinition(MethodDefinition methodDefinition, int token, Readers readers) 
             : base(readers)
@@ -204,6 +206,18 @@ namespace ILDasmLibrary
             }
         }
 
+        public IEnumerable<string> GenericParameters
+        {
+            get
+            {
+                if(_genericParameters == null)
+                {
+                    _genericParameters = ILDasmDecoder.DecodeGenericParameters(_methodDefinition, this);
+                }
+                return _genericParameters;
+            }
+        }
+
         public ILDasmLocal GetLocal(int index)
         {
             if(index < 0 || index >= Locals.Length)
@@ -224,12 +238,41 @@ namespace ILDasmLibrary
 
         public string GetDecodedSignature()
         {
-            return String.Format(".method /*{0}*/ {1} {2} {3}{4}",Token.ToString("X8"),Attributes.ToString(), Signature.ReturnType, Name, _provider.GetParameterList(Signature, _methodDefinition.GetParameters()));
+            string attributes = GetAttributesForSignature();
+            StringBuilder signature = new StringBuilder();
+            if (Signature.Header.IsInstance)
+            {
+                signature.Append("instance ");
+            }
+            signature.Append(Signature.ReturnType);
+            return String.Format(".method /*{0}*/{1}{2} {3}{4}{5}", Token.ToString("X8"), attributes, signature.ToString(), Name, GetGenericParametersString(),_provider.GetParameterList(Signature, _methodDefinition.GetParameters()));
+        }
+
+        private string GetGenericParametersString()
+        {
+            int i = 0;
+            StringBuilder genericParameters = new StringBuilder();
+            foreach (var genericParameter in GenericParameters)
+            {
+                if (i == 0)
+                {
+                    genericParameters.Append("<");
+                }
+                genericParameters.Append(genericParameter);
+                genericParameters.Append(",");
+                i++;
+            }
+            if(i > 0)
+            {
+                genericParameters.Length -= 1; //Delete trailing ,
+                genericParameters.Append(">");
+            }
+            return genericParameters.ToString();
         }
 
         public string DumpMethod(bool showBytes = false)
         {
-            return new ILDasmWriter().DumpMethod(this, showBytes);
+            return new ILDasmWriter(indentation: 0).DumpMethod(this, showBytes);
         }
 
         public string GetFormattedRva()
@@ -244,6 +287,86 @@ namespace ILDasmLibrary
                 var attribute = _readers.MdReader.GetCustomAttribute(handle);
                 yield return attribute;
             }
+        }
+
+        private string GetAttributesForSignature()
+        {
+            return string.Format("{0}{1}", GetAccessibilityFlags(), GetContractFlags());
+        }
+
+        private string GetContractFlags()
+        {
+            StringBuilder sb = new StringBuilder();
+            if (Attributes.HasFlag(MethodAttributes.HideBySig))
+            {
+                sb.Append("hidebysig ");
+            }
+            if (Attributes.HasFlag(MethodAttributes.Static))
+            {
+                sb.Append("static ");
+            }
+            if(Attributes.HasFlag(MethodAttributes.NewSlot))
+            {
+                sb.Append("newslot ");
+            }
+            if (Attributes.HasFlag(MethodAttributes.SpecialName))
+            {
+                sb.Append("specialname ");
+            }
+            if (Attributes.HasFlag(MethodAttributes.RTSpecialName))
+            {
+                sb.Append("rtspecialname ");
+            }
+            if (Attributes.HasFlag(MethodAttributes.Abstract))
+            {
+                sb.Append("abstract ");
+            }
+            if (Attributes.HasFlag(MethodAttributes.CheckAccessOnOverride))
+            {
+                sb.Append("strict ");
+            }
+            if (Attributes.HasFlag(MethodAttributes.Virtual))
+            {
+                sb.Append("virtual ");
+            }
+            if (Attributes.HasFlag(MethodAttributes.Final))
+            {
+                sb.Append("final ");
+            }
+            if (Attributes.HasFlag(MethodAttributes.PinvokeImpl))
+            {
+                sb.Append("pinvokeimpl");
+            }
+            return sb.ToString();
+        }
+
+        private string GetAccessibilityFlags()
+        {
+            if (Attributes.HasFlag(MethodAttributes.Public))
+            {
+                return "public ";
+            }
+            if (Attributes.HasFlag(MethodAttributes.FamORAssem))
+            {
+                return "famorassem ";
+            }
+            if (Attributes.HasFlag(MethodAttributes.Family))
+            {
+                return "family ";
+            }
+            if (Attributes.HasFlag(MethodAttributes.Assembly))
+            {
+                return "assembly ";
+            }
+            if (Attributes.HasFlag(MethodAttributes.FamANDAssem))
+            {
+                return "famandassem ";
+            }
+            if (Attributes.HasFlag(MethodAttributes.Private))
+            {
+                return "private ";
+            }
+            return string.Empty;
         }
     }
 }

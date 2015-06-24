@@ -1,7 +1,6 @@
 ﻿using ILDasmLibrary.Instructions;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -14,10 +13,6 @@ namespace ILDasmLibrary.Decoder
 {
     internal struct ILDasmDecoder
     {
-        public ILDasmDecoder()
-        {
-        }
-
         public static bool IsTypeReference(int token)
         {
             return (token >> 24) == 0x01;
@@ -102,6 +97,16 @@ namespace ILDasmLibrary.Decoder
                 result[i] = new ILDasmParameter(mdReader.GetString(parameter.Name), types[i], isOptional);
             }
             return result;
+        }
+
+        internal static IEnumerable<string> DecodeGenericParameters(MethodDefinition _methodDefinition, ILDasmMethodDefinition method)
+        {
+            int count = method.Signature.GenericParameterCount;
+            foreach (var handle in _methodDefinition.GetGenericParameters())
+            {
+                var parameter = method._readers.MdReader.GetGenericParameter(handle);
+                yield return method._readers.MdReader.GetString(parameter.Name);
+            }
         }
 
         public static string DecodeCustomAttribute(CustomAttribute attribute, ILDasmMethodDefinition _methodDefinition)
@@ -241,6 +246,11 @@ namespace ILDasmLibrary.Decoder
             }
         }
 
+        internal static string DecodeType(EntityHandle catchType, ILDasmTypeProvider provider)
+        {
+            return SignatureDecoder.DecodeType(catchType, provider);
+        }
+
         private static string GetSignature(MetadataReader mdReader, int intOperand, ILDasmTypeProvider provider)
         {
             if (IsStandaloneSignature(intOperand))
@@ -271,11 +281,11 @@ namespace ILDasmLibrary.Decoder
         {
             if(IsMethodDefinition(intOperand) || IsMethodSpecification(intOperand) || IsMemberReference(intOperand))
             {
-                return SolveMethodName(mdReader, intOperand, provider);
+                return "method " + SolveMethodName(mdReader, intOperand, provider);
             }
             if (IsFieldDefinition(intOperand))
             {
-                return GetFieldInformation(mdReader, intOperand, provider);
+                return "field " + GetFieldInformation(mdReader, intOperand, provider);
             }
             return GetTypeInformation(mdReader, intOperand, provider);
         }
@@ -286,6 +296,11 @@ namespace ILDasmLibrary.Decoder
             {
                 var refHandle = MetadataTokens.TypeReferenceHandle(intOperand);
                 return SignatureDecoder.DecodeType(refHandle, provider);
+            }
+            if (IsTypeSpecification(intOperand))
+            {
+                var typeHandle = MetadataTokens.TypeSpecificationHandle(intOperand);
+                return SignatureDecoder.DecodeType(typeHandle, provider);
             }
             var defHandle = MetadataTokens.TypeDefinitionHandle(intOperand);
             return SignatureDecoder.DecodeType(defHandle, provider);

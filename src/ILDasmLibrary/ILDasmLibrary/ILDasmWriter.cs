@@ -1,36 +1,39 @@
 ﻿using ILDasmLibrary.Decoder;
 using ILDasmLibrary.Instructions;
 using System.Collections.Immutable;
+using System.Reflection.Metadata;
 using System.Text;
+using System;
+using System.Collections.Generic;
 
 namespace ILDasmLibrary
 {
     public struct ILDasmWriter
     {
-        private string indent;
-        private int indentation;
+        private string _indent;
+        private int _indentation;
 
-        public ILDasmWriter()
+        public ILDasmWriter(string indent = "  ", int indentation = 0)
         {
-            indent = "  ";
-            indentation = 0;
+            _indent = indent;
+            _indentation = indentation;
         }
 
         private void Indent()
         {
-            indentation++;
+            _indentation++;
         }
 
         private void Unindent()
         {
-            indentation--;
+            _indentation--;
         }
 
         private void WriteIndentation(StringBuilder sb)
         {
-            for (int i = 0; i < indentation; i++)
+            for (int i = 0; i < _indentation; i++)
             {
-                sb.Append(indent);
+                sb.Append(_indent);
             }
         }
 
@@ -40,7 +43,11 @@ namespace ILDasmLibrary
             DumpMethodDefinition(_methodDefinition, sb);
             Indent();
             DumpMethodHeader(_methodDefinition, sb);
-            DumpMethodBody(_methodDefinition, sb, showBytes);
+            int ilOffset = 0;
+            int instructionIndex = 0;
+            int lastRegionIndex = 0;
+            if(_methodDefinition.RelativeVirtualAdress != 0)
+                DumpMethodBody(_methodDefinition, ILDasmExceptionRegion.CreateRegions(_methodDefinition.ExceptionRegions) ,sb,ref instructionIndex, ilOffset,lastRegionIndex, showBytes, out lastRegionIndex);
             Unindent();
             WriteIndentation(sb);
             sb.AppendLine("}");
@@ -104,56 +111,70 @@ namespace ILDasmLibrary
             sb.AppendLine("{");
         }
 
-        private void DumpMethodBody(ILDasmMethodDefinition _methodDefinition, StringBuilder sb, bool showBytes)
+        private int DumpMethodBody(ILDasmMethodDefinition _methodDefinition, IReadOnlyList<ILDasmExceptionRegion> exceptionRegions, StringBuilder sb, ref int instructionIndex, int ilOffset, int regionIndex, bool showBytes, out int nextRegionIndex)
         {
-            if (_methodDefinition.RelativeVirtualAdress == 0) return;
-            int ilOffset = 0;
-            int regionIndex = 0;
-            var exceptionRegions = _methodDefinition.ExceptionRegions;
+            int lastRegionIndex = regionIndex-1;
             var instructions = _methodDefinition.Instructions;
-            for(int instructionIndex = 0;instructionIndex < instructions.Length;instructionIndex++)
+            for(;instructionIndex < instructions.Length;instructionIndex++)
             {
                 var instruction = instructions[instructionIndex];
-                if (regionIndex < exceptionRegions.Length)
+                if(EndFilterRegion(exceptionRegions, lastRegionIndex, ilOffset))
                 {
-                    if (ilOffset == exceptionRegions[regionIndex].TryOffset)
-                    {
-                        WriteIndentation(sb);
-                        sb.Append(".try");
-                        sb.AppendLine("{");
-                        Indent();
-                        DumpInstruction(instruction, sb, ref ilOffset, showBytes);
-                        instructionIndex++;
-                        var region = exceptionRegions[regionIndex++];
-                        while (ilOffset < region.TryOffset + region.TryLength)
-                        {
-                            DumpInstruction(instructions[instructionIndex++], sb, ref ilOffset, showBytes);
-                        }
-                        Unindent();
-                        WriteIndentation(sb);
-                        sb.AppendLine("} //end of try");
-                        //while (ilOffset < region.HandlerOffset + region.HandlerLength)
-                        //{
-                            
-                        //}
-                        instructionIndex--;
-                        continue;
-                    }
+                    Unindent();
+                    WriteIndentation(sb);
+                    sb.AppendLine("} // end filter");
+                    WriteIndentation(sb);
+                    sb.AppendLine("{ // handler");
+                    Indent();
                 }
-                DumpInstruction(instruction, sb, ref ilOffset, showBytes);
+                if(StartRegion(exceptionRegions, regionIndex, ilOffset))
+                {
+                    var region = exceptionRegions[regionIndex];
+                    WriteIndentation(sb);
+                    sb.AppendLine(region.ToString(_methodDefinition.Provider));
+                    WriteIndentation(sb);
+                    sb.AppendLine("{");
+                    Indent();
+                    ilOffset = DumpMethodBody(_methodDefinition, exceptionRegions, sb, ref instructionIndex, ilOffset, regionIndex + 1, showBytes, out regionIndex);
+                    Unindent();
+                    WriteIndentation(sb);
+                    sb.Append("}");
+                    sb.AppendLine(string.Format(" // end {0}", (region.Kind == HandlerKind.Try ? ".try":"handler")));
+                }
+                else
+                {
+                    DumpInstruction(instruction, sb, ref ilOffset, showBytes);
+                }
+                if (EndRegion(exceptionRegions, lastRegionIndex, ilOffset))
+                {
+                    break;
+                }
             }
+            nextRegionIndex = regionIndex;
+            return ilOffset;
         }
 
-        private void DumpExceptionRegionsBeforeFinally(ImmutableArray<ILInstruction> instructions, StringBuilder sb, int finallyIndex, ref int ilOffset, ref int regionIndex)
+        private static bool EndFilterRegion(IReadOnlyList<ILDasmExceptionRegion> exceptionRegions, int lastRegionIndex, int ilOffset)
         {
+            return lastRegionIndex >= 0 && exceptionRegions[lastRegionIndex].Kind == HandlerKind.Filter && exceptionRegions[lastRegionIndex].StartOffset == ilOffset;
+        }
 
+        private static bool EndRegion(IReadOnlyList<ILDasmExceptionRegion> exceptionRegions, int regionIndex, int ilOffset)
+        {
+            return exceptionRegions != null && regionIndex >= 0 && exceptionRegions[regionIndex].EndOffset == ilOffset;
+        }
+
+        private static bool StartRegion(IReadOnlyList<ILDasmExceptionRegion> exceptionRegions, int regionIndex, int ilOffset)
+        {
+            return exceptionRegions != null && regionIndex < exceptionRegions.Count && 
+                (exceptionRegions[regionIndex].StartOffset == ilOffset || exceptionRegions[regionIndex].FilterHandlerStart == ilOffset);
         }
 
         private void DumpInstruction(ILInstruction instruction, StringBuilder sb, ref int ilOffset, bool showBytes)
         {
             WriteIndentation(sb);
             sb.AppendFormat("IL_{0:x4}:", ilOffset);
-            sb.Append(indent);
+            sb.Append(_indent);
             instruction.Dump(sb, showBytes);
             ilOffset += instruction.Size;
             sb.AppendLine();

@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="Decoder\ILDasmDecoder.cs" />
     <Compile Include="Decoder\ILDasmTypeProvider.cs" />
+    <Compile Include="ILDasmExceptionRegion.cs" />
     <Compile Include="ILDasmParameter.cs" />
     <Compile Include="Instructions\ILDasmVariableInstruction.cs" />
     <Compile Include="ILDasm.cs" />
