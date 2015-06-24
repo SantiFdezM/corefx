@@ -383,7 +383,7 @@ namespace ILDasmLibrary.Decoder
                 var methodHandle = MetadataTokens.MethodSpecificationHandle(token);
                 var methodSpec = mdReader.GetMethodSpecification(methodHandle);
                 token = MetadataTokens.GetToken(methodSpec.Method);
-                var signa = SignatureDecoder.DecodeMethodSpecificationSignature(methodSpec.Signature, provider);
+                //var signa = SignatureDecoder.DecodeMethodSpecificationSignature(methodSpec.Signature, provider);
             }
             if (IsMemberReference(token))
             {
