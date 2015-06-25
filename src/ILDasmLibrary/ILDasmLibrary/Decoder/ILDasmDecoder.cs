@@ -341,7 +341,7 @@ namespace ILDasmLibrary.Decoder
             return sb.ToString();
         }
 
-        private static string GetMemberRef(MetadataReader mdReader, int token, ILDasmTypeProvider provider)
+        private static string GetMemberRef(MetadataReader mdReader, int token, ILDasmTypeProvider provider, string genericParameterSignature = "")
         {
             var refHandle = MetadataTokens.MemberReferenceHandle(token);
             var reference = mdReader.GetMemberReference(refHandle);
@@ -368,26 +368,25 @@ namespace ILDasmLibrary.Decoder
                 MethodSignature<string> signature = SignatureDecoder.DecodeMethodSignature(reference.Signature, provider);
                 signatureValue = GetMethodReturnType(signature);
                 parameters = provider.GetParameterList(signature);
+                return String.Format("{0} {1}::{2}{3}{4}", signatureValue, type, GetString(mdReader, reference.Name), genericParameterSignature,parameters);
             }
-            else
-            {
-                signatureValue = SignatureDecoder.DecodeFieldSignature(reference.Signature, provider);
-            }
-            return String.Format("{0} {1}::{2}{3}", signatureValue,type, GetString(mdReader, reference.Name), parameters);
+            signatureValue = SignatureDecoder.DecodeFieldSignature(reference.Signature, provider);
+            return String.Format("{0} {1}::{2}{3}", signatureValue, type, GetString(mdReader, reference.Name), parameters);
         }
 
         private static string SolveMethodName(MetadataReader mdReader, int token, ILDasmTypeProvider provider)
         {
+            string genericParameters = string.Empty;
             if (IsMethodSpecification(token))
             {
                 var methodHandle = MetadataTokens.MethodSpecificationHandle(token);
                 var methodSpec = mdReader.GetMethodSpecification(methodHandle);
                 token = MetadataTokens.GetToken(methodSpec.Method);
-                //var signa = SignatureDecoder.DecodeMethodSpecificationSignature(methodSpec.Signature, provider);
+                genericParameters = GetGenericParametersSignature(methodSpec, provider);
             }
             if (IsMemberReference(token))
             {
-                return GetMemberRef(mdReader, token, provider);
+                return GetMemberRef(mdReader, token, provider, genericParameters);
             }
             var handle = MetadataTokens.MethodDefinitionHandle(token);
             var definition = mdReader.GetMethodDefinition(handle);
@@ -395,7 +394,29 @@ namespace ILDasmLibrary.Decoder
             MethodSignature<string> signature = SignatureDecoder.DecodeMethodSignature(definition.Signature, provider);
             var returnType = GetMethodReturnType(signature);
             var parameters = provider.GetParameterList(signature);
-            return String.Format("{0} {1}.{2}::{3}{4}", returnType, GetString(mdReader, parent.Namespace), GetString(mdReader, parent.Name), GetString(mdReader, definition.Name), parameters);
+            return String.Format("{0} {1}.{2}::{3}{4}{5}", returnType, GetString(mdReader, parent.Namespace), GetString(mdReader, parent.Name), GetString(mdReader, definition.Name), genericParameters,parameters);
+        }
+
+        private static string GetGenericParametersSignature(MethodSpecification methodSpec, ILDasmTypeProvider provider)
+        {
+            var genericParameters = SignatureDecoder.DecodeMethodSpecificationSignature(methodSpec.Signature, provider);
+            StringBuilder sb = new StringBuilder();
+            int i;
+            for(i = 0; i < genericParameters.Length; i++)
+            {
+                if(i == 0)
+                {
+                    sb.Append("<");
+                }
+                sb.Append(genericParameters[i]);
+                sb.Append(",");
+            }
+            if(i > 0)
+            {
+                sb.Length--;
+                sb.Append(">");
+            }
+            return sb.ToString();
         }
 
         private static string GetFieldInformation(MetadataReader mdReader, int intOperand, ILDasmTypeProvider provider)
