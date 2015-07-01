@@ -23,7 +23,7 @@ namespace ILDasmLibrary.Instructions
             {
                 DumpBytes(sb, Bytes);
             }
-            sb.AppendFormat("{0,-10}", opCode);
+            sb.AppendFormat("{0,-11}", opCode);
             sb.AppendFormat("0x{0:x}",Value);
         }
     }

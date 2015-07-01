@@ -7,7 +7,7 @@ using System.Text;
 
 namespace ILDasmLibrary.Decoder
 {
-    public class ILDasmTypeProvider : ISignatureTypeProvider<string>
+    public class ILDasmTypeProvider : ISignatureTypeProvider<ILDasmType>
     {
         private readonly MetadataReader _reader;
 
@@ -21,7 +21,7 @@ namespace ILDasmLibrary.Decoder
 
         public ILDasmTypeProvider(MetadataReader reader)
         {
-            this._reader = reader;
+            _reader = reader;
         }
 
         private string GetName(TypeReference reference)
@@ -33,42 +33,56 @@ namespace ILDasmLibrary.Decoder
             return String.Format("{0}.{1}", Reader.GetString(reference.Namespace), Reader.GetString(reference.Name));
         }
 
-        private string GetName(TypeDefinition type)
+        private string GetName(TypeDefinition type, ref bool isClass, ref bool isValueType)
         {
             var declType = type.BaseType;
             string declName = string.Empty;
-            //if (!declType.IsNil)
-            //{
-            //    if(declType.Kind == HandleKind.TypeDefinition)
-            //    {
-            //        declName = GetFullName((TypeDefinitionHandle)declType);
-            //    }
-            //    if(declType.Kind == HandleKind.TypeReference)
-            //    {
-            //        declName = GetFullName((TypeReferenceHandle)declType);
-            //    }
-            //}
+            if (!declType.IsNil)
+            {
+                if (declType.Kind == HandleKind.TypeDefinition)
+                {
+                    declName = GetName(_reader.GetTypeDefinition((TypeDefinitionHandle)declType), ref isClass, ref isValueType);
+                }
+                if (declType.Kind == HandleKind.TypeReference)
+                {
+                    Debug.Assert(true);
+                    declName = GetFullName((TypeReferenceHandle)declType);
+                }
+                if (declName == "System.ValueType") //ValueType inherits from System.Object as well so we have to reset isClass to false
+                {
+                    isValueType = true;
+                    isClass = false;
+                }
+                if (declName == "System.Object" && !isValueType)
+                {
+                    isClass = true;
+                }
+            }
+            else //interfaces indirectly inherit from System.Object
+            {
+                isClass = true;
+            }
             if (type.Namespace.IsNil)
             {
                 return Reader.GetString(type.Name);
             }
-            return String.Format("{0} {1}.{2}", declName, Reader.GetString(type.Namespace), Reader.GetString(type.Name));
+            return String.Format("{0}.{1}", Reader.GetString(type.Namespace), Reader.GetString(type.Name));
         }
 
-        private string GetFullName(TypeDefinitionHandle handle)
+        private string GetFullName(TypeDefinitionHandle handle, ref bool isClass, ref bool isValueType)
         {
-            return GetFullName(Reader.GetTypeDefinition(handle));
+            return GetFullName(Reader.GetTypeDefinition(handle), ref isClass, ref isValueType);
         }
 
-        private string GetFullName(TypeDefinition type)
+        private string GetFullName(TypeDefinition type, ref bool isClass, ref bool isValueType)
         {
             var declaringType = type.GetDeclaringType();
 
             if (declaringType.IsNil)
             {
-                return GetName(type);
+                return GetName(type, ref isClass, ref isValueType);
             }
-            return String.Format("{0}/{1}", GetFullName(declaringType), GetName(type));
+            return String.Format("{0}/{1}", GetFullName(declaringType, ref isClass, ref isValueType), GetName(type, ref isClass, ref isValueType));
         }
 
         private string GetFullName(TypeReferenceHandle handle)
@@ -88,156 +102,200 @@ namespace ILDasmLibrary.Decoder
                     return String.Format("[{0}]{1}", Reader.GetString(Reader.GetAssemblyReference((AssemblyReferenceHandle)resolutionScope).Name), name);
                 case HandleKind.TypeReference:
                     return String.Format("{0}/{1}", GetFullName((TypeReferenceHandle)resolutionScope), name);
+                case HandleKind.TypeSpecification:
+                    throw new ArgumentException("Check this type");
                 default:
                     return name;
             }
         }
 
-        public string GetArrayType(string elementType, ArrayShape shape)
+        public ILDasmType GetArrayType(ILDasmType elementType, ArrayShape shape)
         {
-            StringBuilder sb = new StringBuilder();
-
-            sb.Append(elementType);
-            sb.Append("[");
+            elementType.Append("[");
             for(int i = 0; i < shape.Rank; i++)
             {
                 int lowerBound = 0;
                 if(i < shape.LowerBounds.Length)
                 {
                     lowerBound = shape.LowerBounds[i];
-                    sb.Append(lowerBound);
-                    sb.Append("...");
+                    elementType.Append(lowerBound.ToString());
+                    elementType.Append("...");
                 }
 
                 if(i < shape.Sizes.Length)
                 {
-                    sb.Append(lowerBound + shape.Sizes[i] - 1);
+                    elementType.Append((lowerBound + shape.Sizes[i] - 1).ToString());
                 }
 
                 if( i < shape.Rank -1)
                 {
-                    sb.Append(",");
+                    elementType.Append(",");
                 }
             }
-            sb.Append("]");
-            return sb.ToString();
+            elementType.Append("]");
+            return elementType;
         }
 
-        public string GetByReferenceType(string elementType)
+        public ILDasmType GetByReferenceType(ILDasmType elementType)
         {
-            return String.Format("{0}&", elementType);
+            elementType.Append("&");
+            return elementType;
         }
 
-        public string GetFunctionPointerType(MethodSignature<string> signature)
+        public ILDasmType GetFunctionPointerType(MethodSignature<ILDasmType> signature)
         {
-            return String.Format("method {0}*{1}", signature.ReturnType, GetParameterList(signature));
+            ILDasmType type = new ILDasmType("method ", false, false);
+            type.Append(signature.ReturnType.ToString());
+            type.Append("*");
+            type.Append(GetParameterList(signature));
+            return type;
         }
 
-        public string GetGenericInstance(string genericType, ImmutableArray<string> typeArguments)
+        public ILDasmType GetGenericInstance(ILDasmType genericType, ImmutableArray<ILDasmType> typeArguments)
         {
-            return String.Format("{0}<{1}>", genericType, String.Join(",", typeArguments));
+            genericType.Append("<");
+            for(int i = 0; i < typeArguments.Length; i++)
+            {
+                var typeArgument = typeArguments[i];
+                genericType.Append(typeArgument.ToString());
+                if(i < typeArguments.Length - 1)
+                {
+                    genericType.Append(",");
+                }
+            }
+            genericType.Append(">");
+            return genericType;
         }
 
-        public string GetGenericMethodParameter(int index)
+        public ILDasmType GetGenericMethodParameter(int index)
         {
-            return String.Format("!!{0}", index);
+            var type = new ILDasmType("", false, false);
+            type.Append("!!");
+            type.Append(index.ToString());
+            return type;
         }
 
-        public string GetGenericTypeParameter(int index)
+        public ILDasmType GetGenericTypeParameter(int index)
         {
-            return String.Format("!{0}", index);
+            var type = new ILDasmType("", false, false);
+            type.Append("!");
+            type.Append(index.ToString());
+            return type;
         }
 
-        public string GetModifiedType(string unmodifiedType, ImmutableArray<CustomModifier<string>> customModifiers)
+        public ILDasmType GetModifiedType(ILDasmType unmodifiedType, ImmutableArray<CustomModifier<ILDasmType>> customModifiers)
         {
-            StringBuilder sb = new StringBuilder();
-            sb.Append(unmodifiedType);
-            sb.Append(" ");
+            unmodifiedType.Append(" ");
 
             foreach(var modifier in customModifiers)
             {
-                sb.Append(modifier.IsRequired ? "modreq(" : "modopt(");
-                sb.Append(modifier.Type);
-                sb.Append(")");
+                unmodifiedType.Append(modifier.IsRequired ? "modreq(" : "modopt(");
+                unmodifiedType.Append(modifier.Type.ToString());
+                unmodifiedType.Append(")");
             }
 
-            return sb.ToString();
+            return unmodifiedType;
         }
 
-        public string GetPinnedType(string elementType)
+        public ILDasmType GetPinnedType(ILDasmType elementType)
         {
-            return String.Format("{0} pinned", elementType);
+            elementType.Append(" pinned");
+            return elementType;
         }
 
-        public string GetPointerType(string elementType)
+        public ILDasmType GetPointerType(ILDasmType elementType)
         {
-            return String.Format("{0}*", elementType);
+            elementType.Append("*");
+            return elementType;
         }
 
-        public string GetPrimitiveType(PrimitiveTypeCode typeCode)
+        public ILDasmType GetPrimitiveType(PrimitiveTypeCode typeCode)
         {
+            string str;
             switch (typeCode)
             {
                 case PrimitiveTypeCode.Boolean:
-                    return "bool";
+                    str = "bool";
+                    break;
                 case PrimitiveTypeCode.Byte:
-                    return "uint8";
+                    str = "uint8";
+                    break;
                 case PrimitiveTypeCode.SByte:
-                    return "int8";
+                    str = "int8";
+                    break;
                 case PrimitiveTypeCode.Char:
-                    return "char";
+                    str = "char";
+                    break;
                 case PrimitiveTypeCode.Single:
-                    return "float32";
+                    str = "float32";
+                    break;
                 case PrimitiveTypeCode.Double:
-                    return "float64";
+                    str = "float64";
+                    break;
                 case PrimitiveTypeCode.Int16:
-                    return "int16";
+                    str = "int16";
+                    break;
                 case PrimitiveTypeCode.Int32:
-                    return "int32";
+                    str = "int32";
+                    break;
                 case PrimitiveTypeCode.Int64:
-                    return "int64";
+                    str = "int64";
+                    break;
                 case PrimitiveTypeCode.UInt16:
-                    return "uint16";
+                    str = "uint16";
+                    break;
                 case PrimitiveTypeCode.UInt32:
-                    return "uint32";
+                    str = "uint32";
+                    break;
                 case PrimitiveTypeCode.UInt64:
-                    return "uint64";
+                    str = "uint64";
+                    break;
                 case PrimitiveTypeCode.IntPtr:
-                    return "native int";
+                    str = "native int";
+                    break;
                 case PrimitiveTypeCode.UIntPtr:
-                    return "native uint";
+                    str = "native uint";
+                    break;
                 case PrimitiveTypeCode.Object:
-                    return "object";
+                    str = "object";
+                    break;
                 case PrimitiveTypeCode.String:
-                    return "string";
+                    str = "string";
+                    break;
                 case PrimitiveTypeCode.TypedReference:
-                    return "typedref";
+                    str = "typedref";
+                    break;
                 case PrimitiveTypeCode.Void:
-                    return "void";
+                    str = "void";
+                    break;
                 default:
                     Debug.Assert(false);
                     throw new ArgumentOutOfRangeException("invalid typeCode");
             }
+            return new ILDasmType(str, false, false);
         }
 
-        public string GetSZArrayType(string elementType)
+        public ILDasmType GetSZArrayType(ILDasmType elementType)
         {
-            return String.Format("{0}[]", elementType);
+            elementType.Append("[]");
+            return elementType;
         }
 
-        public string GetTypeFromDefinition(TypeDefinitionHandle handle)
+        public ILDasmType GetTypeFromDefinition(TypeDefinitionHandle handle)
         {
-            return GetFullName(Reader.GetTypeDefinition(handle));
+            bool isClass = false;
+            bool isValueType = false;
+            return new ILDasmType(GetFullName(Reader.GetTypeDefinition(handle), ref isClass, ref isValueType),isValueType, isClass);
         }
 
-        public string GetTypeFromReference(TypeReferenceHandle handle)
+        public ILDasmType GetTypeFromReference(TypeReferenceHandle handle)
         {
-            return GetFullName(Reader.GetTypeReference(handle));
+            return new ILDasmType(GetFullName(Reader.GetTypeReference(handle)),false, false);
         }
 
-        public string GetParameterList(MethodSignature<string> signature, ParameterHandleCollection? parameters = null)
+        public string GetParameterList(MethodSignature<ILDasmType> signature, ParameterHandleCollection? parameters = null)
         {
-            ImmutableArray<string> types = signature.ParameterTypes;
+            ImmutableArray<ILDasmType> types = signature.ParameterTypes;
             if (types.IsEmpty)
             {
                 return "()";
@@ -253,7 +311,7 @@ namespace ILDasmLibrary.Decoder
                 {
                     sb.Append(",");
                 }
-                sb.Append(types[i]);
+                sb.Append(types[i].ToString());
                 if (parameterNames != null)
                 {
                     sb.AppendFormat(" '{0}'", parameterNames[i]);
@@ -266,7 +324,7 @@ namespace ILDasmLibrary.Decoder
             }
             for (; i < types.Length; i++)
             {
-                sb.Append(types[i]);
+                sb.Append(types[i].ToString());
                 if(i < types.Length -1)
                     sb.Append(",");
             }

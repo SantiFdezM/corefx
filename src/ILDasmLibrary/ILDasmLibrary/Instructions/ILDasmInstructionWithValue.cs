@@ -37,7 +37,7 @@ namespace ILDasmLibrary.Instructions
             {
                 DumpBytes(sb, Token.ToString("X8"));
             }
-            sb.AppendFormat("{0,-10}", opCode);
+            sb.AppendFormat("{0,-11}", opCode);
             sb.Append(Value.ToString());
         }
 

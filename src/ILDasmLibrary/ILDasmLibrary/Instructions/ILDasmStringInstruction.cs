@@ -17,7 +17,7 @@ namespace ILDasmLibrary.Instructions
                 string tokenValue = string.Format("({0}){1}", (Token >> 24).ToString("X2"), Token.ToString("X8").Substring(2));
                 DumpBytes(sb, tokenValue);
             }
-            sb.AppendFormat("{0,-10}", opCode);
+            sb.AppendFormat("{0,-13}", opCode);
             if(Token >> 24 == 0x70)
             {
                 sb.AppendFormat("\"{0}\"", Value);

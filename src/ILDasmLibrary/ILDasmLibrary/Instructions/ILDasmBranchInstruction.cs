@@ -16,7 +16,7 @@ namespace ILDasmLibrary.Instructions
             {
                 DumpBytes(sb, Value.ToString("X4"));
             }
-            sb.AppendFormat("{0,-10}", opCode);
+            sb.AppendFormat("{0,-11}", opCode);
             sb.Append(string.Format("IL_{0:x4}", (Token+Value+Size)));
         }
     }

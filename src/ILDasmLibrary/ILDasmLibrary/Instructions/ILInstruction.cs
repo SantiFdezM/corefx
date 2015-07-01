@@ -32,7 +32,7 @@ namespace ILDasmLibrary.Instructions
 
         protected void DumpBytes(StringBuilder sb, string bytes)
         {
-            sb.AppendFormat("*/ {0,-4} | ", opCode.Value.ToString("X2"));
+            sb.AppendFormat("/* {0,-4} | ", opCode.Value.ToString("X2"));
             sb.Append(string.Format("{0,-16} */ ", bytes));
         }
 

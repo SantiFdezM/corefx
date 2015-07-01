@@ -3,9 +3,9 @@ using System.Text;
 
 namespace ILDasmLibrary.Instructions
 {
-    class ILDasmShortBranchInstruction : ILDasmInstructionWithValue<byte>
+    class ILDasmShortBranchInstruction : ILDasmInstructionWithValue<sbyte>
     {
-        internal ILDasmShortBranchInstruction(OpCode opCode, byte value, int ilOffset, int size)
+        internal ILDasmShortBranchInstruction(OpCode opCode, sbyte value, int ilOffset, int size)
             :base(opCode, value, ilOffset, size)
         {
         }
@@ -16,7 +16,7 @@ namespace ILDasmLibrary.Instructions
             {
                 DumpBytes(sb, Value.ToString("X2"));
             }
-            sb.AppendFormat("{0,-10}", opCode);
+            sb.AppendFormat("{0,-11}", opCode);
             sb.Append(string.Format("IL_{0:x4}", (Token + Value + Size)));
         }
     }

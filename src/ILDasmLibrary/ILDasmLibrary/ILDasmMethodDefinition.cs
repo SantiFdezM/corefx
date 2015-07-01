@@ -17,7 +17,7 @@ namespace ILDasmLibrary
         private readonly ILDasmTypeProvider _provider;
         private string _name;
         private int _rva = -1;
-        private MethodSignature<string> _signature;
+        private MethodSignature<ILDasmType> _signature;
         private BlobReader _ilReader;
         private ImmutableArray<ILInstruction> _instructions;
         private ILDasmLocal[] _locals;
@@ -87,7 +87,7 @@ namespace ILDasmLibrary
             }
         }
 
-        public MethodSignature<string> Signature
+        public MethodSignature<ILDasmType> Signature
         {
             get
             {
@@ -340,6 +340,14 @@ namespace ILDasmLibrary
             return sb.ToString();
         }
 
+        /// <summary>
+        /// This Method is intended to get the accessibility flags.
+        /// Since the enum doesn't have flags values, the smallest values (private, famANDAssem) will always return true.
+        /// To solve this we have to check from the greatest through the smallest and the first flag it finds that way we always find the desired value.
+        /// </summary>
+        /// <returns>
+        /// The accesibility flag as a string.
+        /// </returns>
         private string GetAccessibilityFlags()
         {
             if (Attributes.HasFlag(MethodAttributes.Public))

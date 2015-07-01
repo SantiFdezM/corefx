@@ -30,6 +30,12 @@ internal struct ILDasmExceptionRegion
         EndOffset = endOffset;
     }
 
+    /// <summary>
+    /// This method is used to sort regions from outter to inner (smaller offsets first) so that the regions are dumped
+    /// with the desired format on msil in case we've got nested regions.
+    /// </summary>
+    /// <param name="span2">Region to compare to</param>
+    /// <returns>This method returns -1 if the first is smaller, 0 if they are equal, 1 if the first is greater.</returns>
     public int CompareTo(ILDasmExceptionRegion span2)
     {
         int offset1 = StartOffset;
