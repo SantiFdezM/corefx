@@ -15,6 +15,8 @@ namespace ILDasmLibrary.Decoder
 {
     public struct ILDasmDecoder
     {
+        #region Public APIs
+
         /// <summary>
         /// Method that given a token defines if it is a type reference token.
         /// </summary>
@@ -142,6 +144,10 @@ namespace ILDasmLibrary.Decoder
         {
             return DecodeMethodBody(_methodDefinition.IlReader, _methodDefinition._readers.MdReader, _methodDefinition.Provider, _methodDefinition);
         }
+
+        #endregion
+
+        #region Private and internal helpers
 
         internal static bool HasArgument(OpCode opCode)
         {
@@ -524,5 +530,7 @@ namespace ILDasmLibrary.Decoder
             var parentType = SignatureDecoder.DecodeType(parent, provider);
             return string.Format("{0}::{1}", parentType.ToString(false), GetString(mdReader, definition.Name));
         }
+
+        #endregion
     }
 }

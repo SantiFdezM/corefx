@@ -7,7 +7,7 @@ using System.Text;
 
 namespace ILDasmLibrary.Decoder
 {
-    public class ILDasmTypeProvider : ISignatureTypeProvider<ILDasmType>
+    public struct ILDasmTypeProvider : ISignatureTypeProvider<ILDasmType>
     {
         private readonly MetadataReader _reader;
 
@@ -24,90 +24,7 @@ namespace ILDasmLibrary.Decoder
             _reader = reader;
         }
 
-        private string GetName(TypeReference reference)
-        {
-            if (reference.Namespace.IsNil)
-            {
-                return Reader.GetString(reference.Name);
-            }
-            return String.Format("{0}.{1}", Reader.GetString(reference.Namespace), Reader.GetString(reference.Name));
-        }
-
-        private string GetName(TypeDefinition type, ref bool isClass, ref bool isValueType)
-        {
-            var declType = type.BaseType;
-            string declName = string.Empty;
-            if (!declType.IsNil)
-            {
-                if (declType.Kind == HandleKind.TypeDefinition)
-                {
-                    declName = GetName(_reader.GetTypeDefinition((TypeDefinitionHandle)declType), ref isClass, ref isValueType);
-                }
-                if (declType.Kind == HandleKind.TypeReference)
-                {
-                    Debug.Assert(true);
-                    declName = GetFullName((TypeReferenceHandle)declType);
-                }
-                if (declName == "System.ValueType") //ValueType inherits from System.Object as well so we have to reset isClass to false
-                {
-                    isValueType = true;
-                    isClass = false;
-                }
-                if (declName == "System.Object" && !isValueType)
-                {
-                    isClass = true;
-                }
-            }
-            else //interfaces indirectly inherit from System.Object
-            {
-                isClass = true;
-            }
-            if (type.Namespace.IsNil)
-            {
-                return Reader.GetString(type.Name);
-            }
-            return String.Format("{0}.{1}", Reader.GetString(type.Namespace), Reader.GetString(type.Name));
-        }
-
-        private string GetFullName(TypeDefinitionHandle handle, ref bool isClass, ref bool isValueType)
-        {
-            return GetFullName(Reader.GetTypeDefinition(handle), ref isClass, ref isValueType);
-        }
-
-        private string GetFullName(TypeDefinition type, ref bool isClass, ref bool isValueType)
-        {
-            var declaringType = type.GetDeclaringType();
-
-            if (declaringType.IsNil)
-            {
-                return GetName(type, ref isClass, ref isValueType);
-            }
-            return String.Format("{0}/{1}", GetFullName(declaringType, ref isClass, ref isValueType), GetName(type, ref isClass, ref isValueType));
-        }
-
-        private string GetFullName(TypeReferenceHandle handle)
-        {
-            return GetFullName(Reader.GetTypeReference(handle));
-        }
-
-        private string GetFullName(TypeReference reference)
-        {
-            Handle resolutionScope = reference.ResolutionScope;
-            string name = GetName(reference);
-            switch (resolutionScope.Kind)
-            {
-                case HandleKind.ModuleReference:
-                    return String.Format("[.module {0}]{1}", Reader.GetString(Reader.GetModuleReference((ModuleReferenceHandle)resolutionScope).Name), name);
-                case HandleKind.AssemblyReference:
-                    return String.Format("[{0}]{1}", Reader.GetString(Reader.GetAssemblyReference((AssemblyReferenceHandle)resolutionScope).Name), name);
-                case HandleKind.TypeReference:
-                    return String.Format("{0}/{1}", GetFullName((TypeReferenceHandle)resolutionScope), name);
-                case HandleKind.TypeSpecification:
-                    throw new ArgumentException("Check this type");
-                default:
-                    return name;
-            }
-        }
+        #region Public APIs
 
         public ILDasmType GetArrayType(ILDasmType elementType, ArrayShape shape)
         {
@@ -332,6 +249,10 @@ namespace ILDasmLibrary.Decoder
             return sb.ToString();
         }
 
+        #endregion
+
+        #region Private helper methods
+
         internal string[] GetParameterNames(ParameterHandleCollection? parameters, int requiredCount)
         {
             if(parameters == null || requiredCount == 0)
@@ -349,5 +270,92 @@ namespace ILDasmLibrary.Decoder
             }
             return parameterNames;
         }
+
+        private string GetName(TypeReference reference)
+        {
+            if (reference.Namespace.IsNil)
+            {
+                return Reader.GetString(reference.Name);
+            }
+            return String.Format("{0}.{1}", Reader.GetString(reference.Namespace), Reader.GetString(reference.Name));
+        }
+
+        private string GetName(TypeDefinition type, ref bool isClass, ref bool isValueType)
+        {
+            var declType = type.BaseType;
+            string declName = string.Empty;
+            if (!declType.IsNil)
+            {
+                if (declType.Kind == HandleKind.TypeDefinition)
+                {
+                    declName = GetName(_reader.GetTypeDefinition((TypeDefinitionHandle)declType), ref isClass, ref isValueType);
+                }
+                if (declType.Kind == HandleKind.TypeReference)
+                {
+                    Debug.Assert(true);
+                    declName = GetFullName((TypeReferenceHandle)declType);
+                }
+                if (declName == "System.ValueType") //ValueType inherits from System.Object as well so we have to reset isClass to false
+                {
+                    isValueType = true;
+                    isClass = false;
+                }
+                if (declName == "System.Object" && !isValueType)
+                {
+                    isClass = true;
+                }
+            }
+            else //interfaces indirectly inherit from System.Object
+            {
+                isClass = true;
+            }
+            if (type.Namespace.IsNil)
+            {
+                return Reader.GetString(type.Name);
+            }
+            return String.Format("{0}.{1}", Reader.GetString(type.Namespace), Reader.GetString(type.Name));
+        }
+
+        private string GetFullName(TypeDefinitionHandle handle, ref bool isClass, ref bool isValueType)
+        {
+            return GetFullName(Reader.GetTypeDefinition(handle), ref isClass, ref isValueType);
+        }
+
+        private string GetFullName(TypeDefinition type, ref bool isClass, ref bool isValueType)
+        {
+            var declaringType = type.GetDeclaringType();
+
+            if (declaringType.IsNil)
+            {
+                return GetName(type, ref isClass, ref isValueType);
+            }
+            return String.Format("{0}/{1}", GetFullName(declaringType, ref isClass, ref isValueType), GetName(type, ref isClass, ref isValueType));
+        }
+
+        private string GetFullName(TypeReferenceHandle handle)
+        {
+            return GetFullName(Reader.GetTypeReference(handle));
+        }
+
+        private string GetFullName(TypeReference reference)
+        {
+            Handle resolutionScope = reference.ResolutionScope;
+            string name = GetName(reference);
+            switch (resolutionScope.Kind)
+            {
+                case HandleKind.ModuleReference:
+                    return String.Format("[.module {0}]{1}", Reader.GetString(Reader.GetModuleReference((ModuleReferenceHandle)resolutionScope).Name), name);
+                case HandleKind.AssemblyReference:
+                    return String.Format("[{0}]{1}", Reader.GetString(Reader.GetAssemblyReference((AssemblyReferenceHandle)resolutionScope).Name), name);
+                case HandleKind.TypeReference:
+                    return String.Format("{0}/{1}", GetFullName((TypeReferenceHandle)resolutionScope), name);
+                case HandleKind.TypeSpecification:
+                    throw new ArgumentException("Check this type");
+                default:
+                    return name;
+            }
+        }
+
+        #endregion
     }
 }

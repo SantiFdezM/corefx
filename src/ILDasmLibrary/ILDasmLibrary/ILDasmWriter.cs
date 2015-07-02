@@ -9,16 +9,21 @@ using System.IO;
 
 namespace ILDasmLibrary
 {
+    /// <summary>
+    /// Struct containing public APIs to dump assembly members.
+    /// </summary>
     public struct ILDasmWriter
     {
-        private string _indent;
-        private int _indentation;
+        private static string _indent;
+        private static int _indentation;
 
         public ILDasmWriter(string indent = "  ", int indentation = 0)
         {
             _indent = indent;
             _indentation = indentation;
         }
+
+        #region Public APIs
 
         /// <summary>
         /// Method that dumps the whole assembly to a file.
@@ -40,7 +45,7 @@ namespace ILDasmLibrary
         /// <param name="_typeDefinition">The type that is intended to dump.</param>
         /// <param name="showBytes">Boolean parameter to show the bytes and tokens or not.</param>
         /// <returns>string representing the type</returns>
-        public string DumpType(ILDasmType _typeDefinition, bool showBytes = false)
+        public string DumpType(ILDasmTypeDefinition _typeDefinition, bool showBytes = false)
         {
             // TO DO.
             return string.Empty;
@@ -69,17 +74,20 @@ namespace ILDasmLibrary
             return sb.ToString();
         }
 
-        private void Indent()
+        #endregion
+
+        #region Private helper methods
+        private static void Indent()
         {
             _indentation++;
         }
 
-        private void Unindent()
+        private static void Unindent()
         {
             _indentation--;
         }
 
-        private void WriteIndentation(StringBuilder sb)
+        private static void WriteIndentation(StringBuilder sb)
         {
             for (int i = 0; i < _indentation; i++)
             {
@@ -87,7 +95,7 @@ namespace ILDasmLibrary
             }
         }
 
-        private void DumpMethodHeader(ILDasmMethodDefinition _methodDefinition, StringBuilder sb)
+        private static void DumpMethodHeader(ILDasmMethodDefinition _methodDefinition, StringBuilder sb)
         {
             DumpCustomAttributes(_methodDefinition, sb);
             if(_methodDefinition.RelativeVirtualAddress == 0)
@@ -115,7 +123,7 @@ namespace ILDasmLibrary
             sb.AppendLine();
         }
 
-        private void DumpOverridenMethod(ILDasmMethodDefinition _methodDefinition, StringBuilder sb)
+        private static void DumpOverridenMethod(ILDasmMethodDefinition _methodDefinition, StringBuilder sb)
         {
             WriteIndentation(sb);
             sb.Append(".override ");
@@ -133,7 +141,7 @@ namespace ILDasmLibrary
             sb.AppendLine();
         }
 
-        private void DumpLocals(ILDasmMethodDefinition _methodDefinition, StringBuilder sb)
+        private static void DumpLocals(ILDasmMethodDefinition _methodDefinition, StringBuilder sb)
         {
             WriteIndentation(sb);
             sb.Append(".locals");
@@ -159,14 +167,14 @@ namespace ILDasmLibrary
             sb.Append(")");
         }
 
-        private void DumpMethodDefinition(ILDasmMethodDefinition _methodDefinition, StringBuilder sb)
+        private static void DumpMethodDefinition(ILDasmMethodDefinition _methodDefinition, StringBuilder sb)
         {
             WriteIndentation(sb);
             sb.AppendLine(_methodDefinition.GetDecodedSignature());
             sb.AppendLine("{");
         }
 
-        private int DumpMethodBody(ILDasmMethodDefinition _methodDefinition, IReadOnlyList<ILDasmExceptionRegion> exceptionRegions, StringBuilder sb, ref int instructionIndex, int ilOffset, int regionIndex, bool showBytes, out int nextRegionIndex)
+        private static int DumpMethodBody(ILDasmMethodDefinition _methodDefinition, IReadOnlyList<ILDasmExceptionRegion> exceptionRegions, StringBuilder sb, ref int instructionIndex, int ilOffset, int regionIndex, bool showBytes, out int nextRegionIndex)
         {
             int lastRegionIndex = regionIndex-1;
             var instructions = _methodDefinition.Instructions;
@@ -225,7 +233,7 @@ namespace ILDasmLibrary
                 (exceptionRegions[regionIndex].StartOffset == ilOffset || exceptionRegions[regionIndex].FilterHandlerStart == ilOffset);
         }
 
-        private void DumpInstruction(ILInstruction instruction, StringBuilder sb, ref int ilOffset, bool showBytes)
+        private static void DumpInstruction(ILInstruction instruction, StringBuilder sb, ref int ilOffset, bool showBytes)
         {
             WriteIndentation(sb);
             sb.AppendFormat("IL_{0:x4}:", ilOffset);
@@ -235,7 +243,7 @@ namespace ILDasmLibrary
             sb.AppendLine();
         }
 
-        private void DumpCustomAttributes(ILDasmMethodDefinition _methodDefinition, StringBuilder sb)
+        private static void DumpCustomAttributes(ILDasmMethodDefinition _methodDefinition, StringBuilder sb)
         {
             foreach(var attribute in _methodDefinition.CustomAttributes)
             {
@@ -245,5 +253,7 @@ namespace ILDasmLibrary
                 sb.AppendLine();
             }
         }
+
+        #endregion
     }
 }

@@ -11,6 +11,8 @@ namespace ILDasmLibrary
         private readonly Readers _readers;
         private readonly ILDasmAssembly _assembly;
 
+        #region Public APIs
+
         /// <summary>
         /// Constructor that receives a file stream to create the assembly out from it's file image.
         /// </summary>
@@ -41,6 +43,8 @@ namespace ILDasmLibrary
                 return _assembly;
             }
         }
+
+        #endregion
     }
     
 }

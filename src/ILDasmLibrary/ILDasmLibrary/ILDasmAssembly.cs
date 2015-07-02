@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
 namespace ILDasmLibrary
@@ -26,6 +27,8 @@ namespace ILDasmLibrary
             _assemblyDefinition = assemblyDef;
         }
 
+        #region Public APIs
+
         /// <summary>
         /// Property that represent the Assembly name.
         /// </summary>
@@ -38,7 +41,7 @@ namespace ILDasmLibrary
         }
 
         /// <summary>
-        /// Property containing the assembly culture. 
+        /// Property containing the assembly culture. known as locale, such as en-US or fr-CA.
         /// </summary>
         public string Culture
         {
@@ -151,6 +154,10 @@ namespace ILDasmLibrary
             return String.Format("{0}:{1}:{2}:{3}", Version.Major.ToString(), Version.Minor.ToString(), build.ToString(), revision.ToString());
         }
 
+        #endregion
+
+        #region Private Methods
+
         private void PopulateTypeDefinitions()
         {
             var handles = _readers.MdReader.TypeDefinitions;
@@ -162,7 +169,7 @@ namespace ILDasmLibrary
                     continue;
                 }
                 var typeDefinition = _readers.MdReader.GetTypeDefinition(handle);
-                _typeDefinitions.Add(new ILDasmTypeDefinition(typeDefinition, _readers));
+                _typeDefinitions.Add(new ILDasmTypeDefinition(typeDefinition, _readers, MetadataTokens.GetToken(handle)));
             }
             
         }
@@ -184,6 +191,7 @@ namespace ILDasmLibrary
             sb.Append(")");
             return sb.ToString();
         }
-        
+
+        #endregion
     }
 }

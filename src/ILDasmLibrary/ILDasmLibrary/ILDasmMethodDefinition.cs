@@ -9,6 +9,9 @@ using System.Text;
 
 namespace ILDasmLibrary
 {
+    /// <summary>
+    /// Class representing a method definition in a type whithin an assembly.
+    /// </summary>
     public class ILDasmMethodDefinition : ILDasmObject
     {
         private readonly MethodDefinition _methodDefinition;
@@ -40,6 +43,8 @@ namespace ILDasmLibrary
             _provider = new ILDasmTypeProvider(readers.MdReader);
         }
 
+        #region Internal Properties
+
         /// <summary>
         /// BlobReader that contains the msil instruction bytes.
         /// </summary>
@@ -67,6 +72,9 @@ namespace ILDasmLibrary
             }
         }
 
+        #endregion
+
+        #region Public APIs
         /// <summary>
         /// Method name
         /// </summary>
@@ -367,6 +375,9 @@ namespace ILDasmLibrary
             return string.Format("0x{0:x8}", RelativeVirtualAddress);
         }
 
+        #endregion
+
+        #region Private Methods
         private string GetGenericParametersString()
         {
             int i = 0;
@@ -484,5 +495,6 @@ namespace ILDasmLibrary
             }
             return string.Empty;
         }
+        #endregion
     }
 }
