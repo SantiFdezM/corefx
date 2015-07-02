@@ -3,6 +3,9 @@ using System.Text;
 
 namespace ILDasmLibrary.Instructions
 {
+    /// <summary>
+    /// Base class for IL instructions.
+    /// </summary>
     public abstract class ILInstruction
     {
         private OpCode _opCode;

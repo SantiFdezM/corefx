@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Reflection;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
 namespace ILDasmLibrary
@@ -36,11 +35,14 @@ namespace ILDasmLibrary
             _methodDefinition = methodDefinition;
             _token = token;
             _typeDefinition = typeDefinition;
-            if(RelativeVirtualAdress != 0)
-                _methodBody = _readers.PEReader.GetMethodBody(this.RelativeVirtualAdress);
+            if(RelativeVirtualAddress != 0)
+                _methodBody = _readers.PEReader.GetMethodBody(this.RelativeVirtualAddress);
             _provider = new ILDasmTypeProvider(readers.MdReader);
         }
 
+        /// <summary>
+        /// BlobReader that contains the msil instruction bytes.
+        /// </summary>
         internal BlobReader IlReader
         {
             get
@@ -54,6 +56,9 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// Type provider to solve type names and references.
+        /// </summary>
         internal ILDasmTypeProvider Provider
         {
             get
@@ -62,6 +67,9 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// Method name
+        /// </summary>
         public string Name
         {
             get
@@ -70,7 +78,10 @@ namespace ILDasmLibrary
             }
         }
 
-        public int RelativeVirtualAdress
+        /// <summary>
+        /// Method Relative Virtual Address, if is equal to 0 it is a virtual method and has no body.
+        /// </summary>
+        public int RelativeVirtualAddress
         {
             get
             {
@@ -82,6 +93,9 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// Method Token.
+        /// </summary>
         public int Token
         {
             get
@@ -90,6 +104,31 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// Code Size in bytes not including headers.
+        /// </summary>
+        public int Size
+        {
+            get
+            {
+                return IlReader.Length;
+            }
+        }
+
+        /// <summary>
+        /// Method max stack capacity
+        /// </summary>
+        public int MaxStack
+        {
+            get
+            {
+                return _methodBody.MaxStack;
+            }
+        }
+
+        /// <summary>
+        /// Method Signature containing the return type, parameter count and header information.
+        /// </summary>
         public MethodSignature<ILDasmType> Signature
         {
             get
@@ -103,6 +142,9 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// Boolean to know if it overrides a method definition.
+        /// </summary>
         public bool IsImplementation
         {
             get
@@ -111,6 +153,42 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// Boolean to know if the local variables should be initialized with the "init" prefix on its signature.
+        /// </summary>
+        public bool LocalVariablesInitialized
+        {
+            get
+            {
+                return _methodBody.LocalVariablesInitialized;
+            }
+        }
+
+        /// <summary>
+        /// Boolean to know if the method has a locals declared on its body.
+        /// </summary>
+        public bool HasLocals
+        {
+            get
+            {
+                return !_methodBody.LocalSignature.IsNil;
+            }
+        }
+
+        /// <summary>
+        /// Boolean to know if the current method is the entry point of the assembly.
+        /// </summary>
+        public bool IsEntryPoint
+        {
+            get
+            {
+                return _token == _readers.PEReader.PEHeaders.CorHeader.EntryPointTokenOrRelativeVirtualAddress;
+            }
+        }
+
+        /// <summary>
+        /// Token that represents the token of the method declaration if this method overrides any. 0 if it doesn't override a declaration.
+        /// </summary>
         public int MethodDeclarationToken
         {
             get
@@ -123,30 +201,9 @@ namespace ILDasmLibrary
             }
         }
 
-        public bool LocalVariablesInitialized
-        {
-            get
-            {
-                return _methodBody.LocalVariablesInitialized;
-            }
-        }
-
-        public bool HasLocals
-        {
-            get
-            {
-                return !_methodBody.LocalSignature.IsNil;
-            }
-        }
-
-        public bool IsEntryPoint
-        {
-            get
-            {
-                return _token == _readers.PEReader.PEHeaders.CorHeader.EntryPointTokenOrRelativeVirtualAddress;
-            }
-        }
-
+        /// <summary>
+        /// Flags on the method (Calling convention, accesibility flags, etc.
+        /// </summary>
         public MethodAttributes Attributes
         {
             get
@@ -155,6 +212,9 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// Custom attributes declared on the method body header.
+        /// </summary>
         public IEnumerable<CustomAttribute> CustomAttributes
         {
             get
@@ -167,6 +227,9 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// Exception regions in the method body.
+        /// </summary>
         public ImmutableArray<ExceptionRegion> ExceptionRegions
         {
             get
@@ -175,22 +238,9 @@ namespace ILDasmLibrary
             }
         }
 
-        public int Size
-        {
-            get
-            {
-                return IlReader.Length;
-            }
-        }
-
-        public int MaxStack
-        {
-            get
-            {
-                return _methodBody.MaxStack;
-            }
-        }
-
+        /// <summary>
+        /// List of instructions that represent the method body.
+        /// </summary>
         public ImmutableArray<ILInstruction> Instructions
         {
             get
@@ -203,6 +253,9 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// Parameters that the method take.
+        /// </summary>
         public ILDasmParameter[] Parameters
         {
             get
@@ -215,8 +268,9 @@ namespace ILDasmLibrary
             }
         }
 
-        
-
+        /// <summary>
+        /// Locals contained on the method body.
+        /// </summary>
         public ILDasmLocal[] Locals
         {
             get
@@ -229,6 +283,9 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// Method generic parameters.
+        /// </summary>
         public IEnumerable<string> GenericParameters
         {
             get
@@ -241,6 +298,14 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// Method that given an index returns a local.
+        /// 
+        /// Exception:
+        ///     IndexOutOfBoundsException if the index is greater or equal than the number of locals or less to 0.
+        /// </summary>
+        /// <param name="index">Index of the local to get</param>
+        /// <returns>The local in current index.</returns>
         public ILDasmLocal GetLocal(int index)
         {
             if(index < 0 || index >= Locals.Length)
@@ -250,6 +315,14 @@ namespace ILDasmLibrary
             return Locals[index];
         }
 
+        /// <summary>
+        /// Method that given an index returns a parameter.
+        /// 
+        /// Exception:
+        ///     IndexOutOfBoundsException if the index is greater or equal than the number of locals or less to 0.
+        /// </summary>
+        /// <param name="index">Index of the parameter to get</param>
+        /// <returns>The local in current index.</returns>
         public ILDasmParameter GetParameter(int index)
         {
             if(index < 0 || index >= Parameters.Length)
@@ -259,6 +332,10 @@ namespace ILDasmLibrary
             return Parameters[index];
         }
 
+        /// <summary>
+        /// Method that decodes the method signature as a string with all it's flags, return type, name and parameters.
+        /// </summary>
+        /// <returns>Returns the method signature as a string</returns>
         public string GetDecodedSignature()
         {
             string attributes = GetAttributesForSignature();
@@ -269,6 +346,25 @@ namespace ILDasmLibrary
             }
             signature.Append(Signature.ReturnType);
             return String.Format(".method /*{0}*/{1}{2} {3}{4}{5}", Token.ToString("X8"), attributes, signature.ToString(), Name, GetGenericParametersString(),_provider.GetParameterList(Signature, _methodDefinition.GetParameters()));
+        }
+
+        /// <summary>
+        /// Method that dumps the whole method, with it's signature, header and body as a string.
+        /// </summary>
+        /// <param name="showBytes">Boolean parameter that indicates if you want it to show the byte values and tokens for the instructions.</param>
+        /// <returns>A string representing the whole method</returns>
+        public string DumpMethod(bool showBytes = false)
+        {
+            return new ILDasmWriter(indentation: 0).DumpMethod(this, showBytes);
+        }
+
+        /// <summary>
+        /// Method that formats the Relative Virtual Address to it's hexadecimal representation.
+        /// </summary>
+        /// <returns>String representing the Relative virtual Address in hexadecimal</returns>
+        public string GetFormattedRva()
+        {
+            return string.Format("0x{0:x8}", RelativeVirtualAddress);
         }
 
         private string GetGenericParametersString()
@@ -285,24 +381,13 @@ namespace ILDasmLibrary
                 genericParameters.Append(",");
                 i++;
             }
-            if(i > 0)
+            if (i > 0)
             {
                 genericParameters.Length -= 1; //Delete trailing ,
                 genericParameters.Append(">");
             }
             return genericParameters.ToString();
         }
-
-        public string DumpMethod(bool showBytes = false)
-        {
-            return new ILDasmWriter(indentation: 0).DumpMethod(this, showBytes);
-        }
-
-        public string GetFormattedRva()
-        {
-            return string.Format("0x{0:x8}", RelativeVirtualAdress);
-        }
-
         private IEnumerable<CustomAttribute> PopulateCustomAttributes()
         {
             foreach(var handle in _methodDefinition.GetCustomAttributes())

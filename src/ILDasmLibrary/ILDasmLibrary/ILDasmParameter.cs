@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ILDasmLibrary
+﻿namespace ILDasmLibrary
 {
+    /// <summary>
+    /// Struct that represents a parameter object.
+    /// </summary>
     public struct ILDasmParameter
     {
         private readonly string _name;
@@ -19,6 +16,9 @@ namespace ILDasmLibrary
             _isOptional = optional;
         }
 
+        /// <summary>
+        /// Property containing the parameter name.
+        /// </summary>
         public string Name
         {
             get
@@ -27,6 +27,9 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// Property containing the parameter type.
+        /// </summary>
         public string Type
         {
             get
@@ -35,6 +38,9 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// Property that indicates whether the parameter is optional or not.
+        /// </summary>
         public bool IsOptional
         {
             get

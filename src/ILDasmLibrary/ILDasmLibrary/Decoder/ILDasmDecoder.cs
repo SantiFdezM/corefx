@@ -13,104 +13,96 @@ using System.Text;
 
 namespace ILDasmLibrary.Decoder
 {
-    internal struct ILDasmDecoder
+    public struct ILDasmDecoder
     {
+        /// <summary>
+        /// Method that given a token defines if it is a type reference token.
+        /// </summary>
+        /// <param name="token">token to solve</param>
+        /// <returns>true if is a type reference false if not</returns>
         public static bool IsTypeReference(int token)
         {
             return (token >> 24) == 0x01;
         }
 
+        /// <summary>
+        /// Method that given a token defines if it is a type definition token.
+        /// </summary>
+        /// <param name="token">token to solve</param>
+        /// <returns>true if is a type definition false if not</returns>
         public static bool IsTypeDefinition(int token)
         {
             return (token >> 24) == 0x02;
         }
 
+        /// <summary>
+        /// Method that given a token defines if it is a user string token.
+        /// </summary>
+        /// <param name="token">token to solve</param>
+        /// <returns>true if is a user string false if not</returns>
         public static bool IsUserString(int token)
         {
             return (token >> 24) == 0x70;
         }
 
+        /// <summary>
+        /// Method that given a token defines if it is a member reference token.
+        /// </summary>
+        /// <param name="token">token to solve</param>
+        /// <returns>true if is a member reference false if not</returns>
         public static bool IsMemberReference(int token)
         {
             return (token >> 24) == 0x0a;
         }
 
+        /// <summary>
+        /// Method that given a token defines if it is a method specification token.
+        /// </summary>
+        /// <param name="token">token to solve</param>
+        /// <returns>true if is a method specification false if not</returns>
         public static bool IsMethodSpecification(int token)
         {
             return (token >> 24) == 0x2b;
         }
 
+        /// <summary>
+        /// Method that given a token defines if it is a method definition token.
+        /// </summary>
+        /// <param name="token">token to solve</param>
+        /// <returns>true if is a method definition false if not</returns>
         public static bool IsMethodDefinition(int token)
         {
             return (token >> 24) == 0x06;
         }
 
+        /// <summary>
+        /// Method that given a token defines if it is a field definition token.
+        /// </summary>
+        /// <param name="token">token to solve</param>
+        /// <returns>true if is a field definition false if not</returns>
         public static bool IsFieldDefinition(int token)
         {
             return (token >> 24) == 0x04;
         }
 
+        /// <summary>
+        /// Method that given a token defines if it is a type specification token.
+        /// </summary>
+        /// <param name="token">token to solve</param>
+        /// <returns>true if is a type specification false if not</returns>
         public static bool IsTypeSpecification(int token)
         {
             return (token >> 24) == 0x1b;
         }
 
+        /// <summary>
+        /// Method that given a token defines if it is a standalone signature token.
+        /// </summary>
+        /// <param name="token">token to solve</param>
+        /// <returns>true if is a standalone signature false if not</returns>
         public static bool IsStandaloneSignature(int token)
         {
             return (token >> 24) == 0x11;
-        }
-
-        public static bool HasArgument(OpCode opCode)
-        {
-            bool isLoad = opCode == OpCodes.Ldarg || opCode == OpCodes.Ldarga || opCode == OpCodes.Ldarga_S || opCode == OpCodes.Ldarg_S;
-            bool isStore = opCode == OpCodes.Starg_S || opCode == OpCodes.Starg;
-            return isLoad || isStore;
-        }
-
-        internal static ILDasmLocal[] DecodeLocalSignature(MethodBodyBlock methodBody, MetadataReader mdReader, ILDasmTypeProvider provider)
-        {
-            if (methodBody.LocalSignature.IsNil)
-            {
-                return new ILDasmLocal[0];
-            }
-            var localTypes = SignatureDecoder.DecodeLocalSignature(methodBody.LocalSignature, provider);
-            ILDasmLocal[] locals = new ILDasmLocal[localTypes.Count()];
-            for(int i=0; i < localTypes.Length; i++)
-            {
-                string name = "V_" + i;
-                locals[i] = new ILDasmLocal(name, localTypes[i].ToString());
-            }
-            return locals;
-        }
-
-        internal static ILDasmParameter[] DecodeParameters(MethodSignature<ILDasmType> signature, ParameterHandleCollection parameters, MetadataReader mdReader)
-        {
-            var types = signature.ParameterTypes;
-            int requiredCount = Math.Min(signature.RequiredParameterCount, types.Length);
-            if (requiredCount == 0)
-            {
-                return new ILDasmParameter[0];
-            }
-            ILDasmParameter[] result = new ILDasmParameter[requiredCount];
-            for(int i=0; i < requiredCount; i++)
-            {
-                var parameter = mdReader.GetParameter(parameters.ElementAt(i));
-                bool isOptional = parameter.Attributes.HasFlag(ParameterAttributes.Optional);
-                var parameterName = mdReader.GetString(parameter.Name);
-                parameterName = ILDecoderHelpers.Instance.NormalizeString(parameterName);
-                result[i] = new ILDasmParameter(parameterName, types[i].ToString(), isOptional);
-            }
-            return result;
-        }
-
-        internal static IEnumerable<string> DecodeGenericParameters(MethodDefinition _methodDefinition, ILDasmMethodDefinition method)
-        {
-            int count = method.Signature.GenericParameterCount;
-            foreach (var handle in _methodDefinition.GetGenericParameters())
-            {
-                var parameter = method._readers.MdReader.GetGenericParameter(handle);
-                yield return method._readers.MdReader.GetString(parameter.Name);
-            }
         }
 
         public static string DecodeCustomAttribute(CustomAttribute attribute, ILDasmMethodDefinition _methodDefinition)
@@ -141,7 +133,7 @@ namespace ILDasmLibrary.Decoder
             return sb.ToString();
         }
 
-        internal static MethodSignature<ILDasmType> DecodeMethodSignature(MethodDefinition _methodDefinition, ILDasmTypeProvider _provider)
+        public static MethodSignature<ILDasmType> DecodeMethodSignature(MethodDefinition _methodDefinition, ILDasmTypeProvider _provider)
         {
             return SignatureDecoder.DecodeMethodSignature(_methodDefinition.Signature, _provider);
         }
@@ -149,6 +141,13 @@ namespace ILDasmLibrary.Decoder
         public static IEnumerable<ILInstruction> DecodeMethodBody(ILDasmMethodDefinition _methodDefinition)
         {
             return DecodeMethodBody(_methodDefinition.IlReader, _methodDefinition._readers.MdReader, _methodDefinition.Provider, _methodDefinition);
+        }
+
+        internal static bool HasArgument(OpCode opCode)
+        {
+            bool isLoad = opCode == OpCodes.Ldarg || opCode == OpCodes.Ldarga || opCode == OpCodes.Ldarga_S || opCode == OpCodes.Ldarg_S;
+            bool isStore = opCode == OpCodes.Starg_S || opCode == OpCodes.Starg;
+            return isLoad || isStore;
         }
 
         private static IEnumerable<ILInstruction> DecodeMethodBody(BlobReader ilReader, MetadataReader mdReader, ILDasmTypeProvider provider, ILDasmMethodDefinition _methodDefinition)
@@ -248,6 +247,52 @@ namespace ILDasmLibrary.Decoder
                 }
                 ilOffset += instruction.Size;
                 yield return instruction;
+            }
+        }
+
+        internal static ILDasmLocal[] DecodeLocalSignature(MethodBodyBlock methodBody, MetadataReader mdReader, ILDasmTypeProvider provider)
+        {
+            if (methodBody.LocalSignature.IsNil)
+            {
+                return new ILDasmLocal[0];
+            }
+            var localTypes = SignatureDecoder.DecodeLocalSignature(methodBody.LocalSignature, provider);
+            ILDasmLocal[] locals = new ILDasmLocal[localTypes.Count()];
+            for (int i = 0; i < localTypes.Length; i++)
+            {
+                string name = "V_" + i;
+                locals[i] = new ILDasmLocal(name, localTypes[i].ToString());
+            }
+            return locals;
+        }
+
+        internal static ILDasmParameter[] DecodeParameters(MethodSignature<ILDasmType> signature, ParameterHandleCollection parameters, MetadataReader mdReader)
+        {
+            var types = signature.ParameterTypes;
+            int requiredCount = Math.Min(signature.RequiredParameterCount, types.Length);
+            if (requiredCount == 0)
+            {
+                return new ILDasmParameter[0];
+            }
+            ILDasmParameter[] result = new ILDasmParameter[requiredCount];
+            for (int i = 0; i < requiredCount; i++)
+            {
+                var parameter = mdReader.GetParameter(parameters.ElementAt(i));
+                bool isOptional = parameter.Attributes.HasFlag(ParameterAttributes.Optional);
+                var parameterName = mdReader.GetString(parameter.Name);
+                parameterName = ILDecoderHelpers.Instance.NormalizeString(parameterName);
+                result[i] = new ILDasmParameter(parameterName, types[i].ToString(), isOptional);
+            }
+            return result;
+        }
+
+        internal static IEnumerable<string> DecodeGenericParameters(MethodDefinition _methodDefinition, ILDasmMethodDefinition method)
+        {
+            int count = method.Signature.GenericParameterCount;
+            foreach (var handle in _methodDefinition.GetGenericParameters())
+            {
+                var parameter = method._readers.MdReader.GetGenericParameter(handle);
+                yield return method._readers.MdReader.GetString(parameter.Name);
             }
         }
 

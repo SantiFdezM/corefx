@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 namespace ILDasmLibrary.Decoder
 {
@@ -21,6 +17,9 @@ namespace ILDasmLibrary.Decoder
             _isClassType = isClassType;
         }
 
+        /// <summary>
+        /// Name of the type (int32, string, double, etc).
+        /// </summary>
         public string Name
         {
             get
@@ -29,6 +28,9 @@ namespace ILDasmLibrary.Decoder
             }
         }
 
+        /// <summary>
+        /// Value to indicate if the current type inherits from System.ValueType
+        /// </summary>
         public bool IsValueType
         {
             get
@@ -37,6 +39,9 @@ namespace ILDasmLibrary.Decoder
             }
         }
 
+        /// <summary>
+        /// Value to indicate if the current type inherits from System.Object and it doesn't from System.ValueType so it is a "class" type.
+        /// </summary>
         public bool IsClassType
         {
             get
@@ -45,16 +50,29 @@ namespace ILDasmLibrary.Decoder
             }
         }
 
+        /// <summary>
+        /// Method that appends a string to the type while building it.
+        /// </summary>
+        /// <param name="str">string to append.</param>
         public void Append(string str)
         {
             _name.Append(str);
         }
 
+        /// <summary>
+        /// Method that returns the type name.
+        /// </summary>
+        /// <returns>string representing the type name</returns>
         public override string ToString()
         {
             return ToString(true);
         }
 
+        /// <summary>
+        /// Method that returns the type name with the option to show "class" or "valutype" prefix depending on it's inheritance.
+        /// </summary>
+        /// <param name="showBaseType">boolean that represents if you want the prefix to be shown.</param>
+        /// <returns>string that represents the type.</returns>
         public string ToString(bool showBaseType)
         {
             string baseType = string.Empty;

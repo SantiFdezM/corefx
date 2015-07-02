@@ -18,7 +18,7 @@ namespace ILDasmLibrary
         {
             _typeDefinition = typeDef;
         }
-
+         
         public string Name
         {
             get

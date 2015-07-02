@@ -5,6 +5,7 @@ using System.Reflection.Metadata;
 using System.Text;
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace ILDasmLibrary
 {
@@ -17,6 +18,55 @@ namespace ILDasmLibrary
         {
             _indent = indent;
             _indentation = indentation;
+        }
+
+        /// <summary>
+        /// Method that dumps the whole assembly to a file.
+        /// </summary>
+        /// <param name="_assembly">assembly to dump.</param>
+        /// <param name="file">StreamWriter of the file where the assembly is intended to be dumped on.</param>
+        public void DumpAssembly(ILDasmAssembly _assembly, StreamWriter file)
+        {
+            if(file == null)
+            {
+                throw new ArgumentNullException("The stream writer can't be null");
+            }
+            // TO DO: Dump whole assembly to file.
+        }
+
+        /// <summary>
+        /// Method that dumps the type definition as a string. Including all it's properties, fields, custom attributes, methods and nested types.
+        /// </summary>
+        /// <param name="_typeDefinition">The type that is intended to dump.</param>
+        /// <param name="showBytes">Boolean parameter to show the bytes and tokens or not.</param>
+        /// <returns>string representing the type</returns>
+        public string DumpType(ILDasmType _typeDefinition, bool showBytes = false)
+        {
+            // TO DO.
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Method that dumps the method body representation as a string. (Signature, header, body).
+        /// </summary>
+        /// <param name="_methodDefinition">The method definition from the method that is intended to dump.</param>
+        /// <param name="showBytes">Boolean parameter to show the bytes and tokens from instructions or not.</param>
+        /// <returns>string representing the method definition.</returns>
+        public string DumpMethod(ILDasmMethodDefinition _methodDefinition, bool showBytes = false)
+        {
+            StringBuilder sb = new StringBuilder();
+            DumpMethodDefinition(_methodDefinition, sb);
+            Indent();
+            DumpMethodHeader(_methodDefinition, sb);
+            int ilOffset = 0;
+            int instructionIndex = 0;
+            int lastRegionIndex = 0;
+            if (_methodDefinition.RelativeVirtualAddress != 0)
+                DumpMethodBody(_methodDefinition, ILDasmExceptionRegion.CreateRegions(_methodDefinition.ExceptionRegions), sb, ref instructionIndex, ilOffset, lastRegionIndex, showBytes, out lastRegionIndex);
+            Unindent();
+            WriteIndentation(sb);
+            sb.AppendLine("}");
+            return sb.ToString();
         }
 
         private void Indent()
@@ -37,27 +87,10 @@ namespace ILDasmLibrary
             }
         }
 
-        public string DumpMethod(ILDasmMethodDefinition _methodDefinition, bool showBytes = false)
-        {
-            StringBuilder sb = new StringBuilder();
-            DumpMethodDefinition(_methodDefinition, sb);
-            Indent();
-            DumpMethodHeader(_methodDefinition, sb);
-            int ilOffset = 0;
-            int instructionIndex = 0;
-            int lastRegionIndex = 0;
-            if(_methodDefinition.RelativeVirtualAdress != 0)
-                DumpMethodBody(_methodDefinition, ILDasmExceptionRegion.CreateRegions(_methodDefinition.ExceptionRegions) ,sb,ref instructionIndex, ilOffset,lastRegionIndex, showBytes, out lastRegionIndex);
-            Unindent();
-            WriteIndentation(sb);
-            sb.AppendLine("}");
-            return sb.ToString();
-        }
-
         private void DumpMethodHeader(ILDasmMethodDefinition _methodDefinition, StringBuilder sb)
         {
             DumpCustomAttributes(_methodDefinition, sb);
-            if(_methodDefinition.RelativeVirtualAdress == 0)
+            if(_methodDefinition.RelativeVirtualAddress == 0)
             {
                 return;
             }

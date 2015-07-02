@@ -6,6 +6,9 @@ using System.Text;
 
 namespace ILDasmLibrary
 {
+    /// <summary>
+    /// Class representing an assembly.
+    /// </summary>
     public class ILDasmAssembly : ILDasmObject
     {
         private AssemblyDefinition _assemblyDefinition;
@@ -23,6 +26,9 @@ namespace ILDasmLibrary
             _assemblyDefinition = assemblyDef;
         }
 
+        /// <summary>
+        /// Property that represent the Assembly name.
+        /// </summary>
         public string Name
         {
             get
@@ -31,14 +37,20 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// Property containing the assembly culture. 
+        /// </summary>
         public string Culture
         {
             get
             {
-                return GetCachedValue(_assemblyDefinition.Name, ref _culture);
+                return GetCachedValue(_assemblyDefinition.Culture, ref _culture);
             }
         }
 
+        /// <summary>
+        /// Property that represents the hash algorithm used on this assembly to hash the files.
+        /// </summary>
         public int HashAlgorithm
         {
             get
@@ -51,6 +63,14 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// Version of the assembly.
+        /// Containing:
+        ///    MajorVersion
+        ///    MinorVersion
+        ///    BuildNumber
+        ///    RevisionNumber
+        /// </summary>
         public Version Version
         {
             get
@@ -63,6 +83,10 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// A binary object representing a public encryption key for a strong-named assembly.
+        /// Represented as a byte array on a string format (00 00 00 00 00 00 00 00 00)
+        /// </summary>
         public string PublicKey
         {
             get
@@ -75,6 +99,9 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// Assembly flags if it is strong named, whether the JIT tracking and optimization is enabled, and if the assembly can be retargeted at run time to a different assembly version.
+        /// </summary>
         public string Flags
         {
             get
@@ -87,6 +114,9 @@ namespace ILDasmLibrary
             }
         }
 
+        /// <summary>
+        /// The type definitions contained on the current assembly.
+        /// </summary>
         public IEnumerable<ILDasmTypeDefinition> TypeDefinitions
         {
             get
@@ -97,6 +127,28 @@ namespace ILDasmLibrary
                 }
                 return _typeDefinitions.AsEnumerable<ILDasmTypeDefinition>();
             }
+        }
+
+        /// <summary>
+        /// Method to get the hash algorithm formatted in the MSIL syntax.
+        /// </summary>
+        /// <returns>string representing the hash algorithm.</returns>
+        public string GetFormattedHashAlgorithm()
+        {
+            return String.Format("0x{0:x8}", HashAlgorithm);
+        }
+
+        /// <summary>
+        /// Method to get the version formatted to the MSIL syntax. MajorVersion:MinorVersion:BuildVersion:RevisionVersion.
+        /// </summary>
+        /// <returns>string representing the version.</returns>
+        public string GetFormattedVersion()
+        {
+            int build = Version.Build;
+            int revision = Version.Revision;
+            if (build == -1) build = 0;
+            if (revision == -1) revision = 0;
+            return String.Format("{0}:{1}:{2}:{3}", Version.Major.ToString(), Version.Minor.ToString(), build.ToString(), revision.ToString());
         }
 
         private void PopulateTypeDefinitions()
@@ -132,19 +184,6 @@ namespace ILDasmLibrary
             sb.Append(")");
             return sb.ToString();
         }
-
-        public string GetFormattedHashAlgorithm()
-        {
-            return String.Format("0x{0:x8}", HashAlgorithm);
-        }
-
-        public string GetFormattedVersion()
-        {
-            int build = Version.Build;
-            int revision = Version.Revision;
-            if (build == -1) build = 0;
-            if (revision == -1) revision = 0;
-            return String.Format("{0}:{1}:{2}:{3}", Version.Major.ToString(), Version.Minor.ToString(), build.ToString(), revision.ToString());
-        }
+        
     }
 }
