@@ -5,9 +5,11 @@ namespace ILDasmLibrary.Instructions
 {
     public class ILDasmStringInstruction : ILDasmInstructionWithValue<string>
     {
-        internal ILDasmStringInstruction(OpCode opCode,string value, int token, int size)
+        private readonly bool _isPrintable;
+        internal ILDasmStringInstruction(OpCode opCode,string value, int token, int size, bool isPrintable = true)
             : base(opCode, value, token, size)
         {
+            _isPrintable = isPrintable;
         }
 
         override public void Dump(StringBuilder sb, bool showBytes = false)
@@ -20,7 +22,12 @@ namespace ILDasmLibrary.Instructions
             sb.AppendFormat("{0,-13}", opCode);
             if(Token >> 24 == 0x70)
             {
-                sb.AppendFormat("\"{0}\"", Value);
+                if (_isPrintable)
+                {
+                    sb.AppendFormat("\"{0}\"", Value);
+                    return;
+                }
+                sb.AppendFormat("{0}", Value);
                 return;
             }
             sb.Append(Value);

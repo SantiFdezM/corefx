@@ -61,6 +61,10 @@ namespace ILDasmLibrary
             {
                 return;
             }
+            if (_methodDefinition.IsImplementation)
+            {
+                DumpOverridenMethod(_methodDefinition, sb);
+            }
             if (_methodDefinition.IsEntryPoint)
             {
                 WriteIndentation(sb);
@@ -75,6 +79,24 @@ namespace ILDasmLibrary
                 sb.AppendLine();
                 DumpLocals(_methodDefinition, sb);
             }
+            sb.AppendLine();
+        }
+
+        private void DumpOverridenMethod(ILDasmMethodDefinition _methodDefinition, StringBuilder sb)
+        {
+            WriteIndentation(sb);
+            sb.Append(".override ");
+            int token = _methodDefinition.MethodDeclarationToken;
+            if (ILDasmDecoder.IsMemberReference(token))
+            {
+                sb.Append("method ");
+                sb.Append(ILDasmDecoder.SolveMethodName(_methodDefinition._readers.MdReader, token, _methodDefinition.Provider));
+                sb.Append(string.Format(" /* {0} */", token.ToString("X8")));
+                sb.AppendLine();
+                return;
+            }
+            sb.Append(ILDasmDecoder.DecodeOverridenMethodName(_methodDefinition._readers.MdReader, token, _methodDefinition.Provider));
+            sb.Append(string.Format(" /* {0} */", token.ToString("X8")));
             sb.AppendLine();
         }
 

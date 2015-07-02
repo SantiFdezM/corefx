@@ -27,12 +27,15 @@ namespace ILDasmLibrary
         private int _token;
         private IEnumerable<CustomAttribute> _customAttributes;
         private IEnumerable<string> _genericParameters;
+        private ILDasmTypeDefinition _typeDefinition;
+        private int _methodDeclarationToken = -1;
 
-        internal ILDasmMethodDefinition(MethodDefinition methodDefinition, int token, Readers readers) 
+        internal ILDasmMethodDefinition(MethodDefinition methodDefinition, int token, Readers readers, ILDasmTypeDefinition typeDefinition) 
             : base(readers)
         {
             _methodDefinition = methodDefinition;
             _token = token;
+            _typeDefinition = typeDefinition;
             if(RelativeVirtualAdress != 0)
                 _methodBody = _readers.PEReader.GetMethodBody(this.RelativeVirtualAdress);
             _provider = new ILDasmTypeProvider(readers.MdReader);
@@ -97,6 +100,26 @@ namespace ILDasmLibrary
                     _signature = ILDasmDecoder.DecodeMethodSignature(_methodDefinition, _provider);
                 }
                 return _signature;
+            }
+        }
+
+        public bool IsImplementation
+        {
+            get
+            {
+                return MethodDeclarationToken != 0;
+            }
+        }
+
+        public int MethodDeclarationToken
+        {
+            get
+            {
+                if (_methodDeclarationToken == -1)
+                {
+                    _methodDeclarationToken = _typeDefinition.GetMethodDeclTokenFromImplementation(Token);
+                }
+                return _methodDeclarationToken;
             }
         }
 

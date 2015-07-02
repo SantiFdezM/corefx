@@ -314,7 +314,7 @@ namespace ILDasmLibrary.Decoder
                 sb.Append(types[i].ToString());
                 if (parameterNames != null)
                 {
-                    sb.AppendFormat(" '{0}'", parameterNames[i]);
+                    sb.AppendFormat(" {0}", ILDecoderHelpers.Instance.NormalizeString(parameterNames[i]));
                 }
             }
 

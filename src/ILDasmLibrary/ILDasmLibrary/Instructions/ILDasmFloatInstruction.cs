@@ -25,6 +25,14 @@ namespace ILDasmLibrary.Instructions
                 DumpBytes(sb, Bytes);
             }
             sb.AppendFormat("{0,-11}", opCode);
+            if (float.IsNaN(Value))
+            {
+                var data = BitConverter.GetBytes(Value);
+                sb.Append("(");
+                sb.Append(BitConverter.ToString(data).Replace("-", " "));
+                sb.Append(")");
+                return;
+            }
             sb.Append(Value.ToString());
             if(Value%10 == 0)
             {
