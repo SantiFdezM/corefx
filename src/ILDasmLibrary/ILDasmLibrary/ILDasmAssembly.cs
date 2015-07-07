@@ -169,7 +169,8 @@ namespace ILDasmLibrary
                     continue;
                 }
                 var typeDefinition = _readers.MdReader.GetTypeDefinition(handle);
-                _typeDefinitions.Add(new ILDasmTypeDefinition(typeDefinition, _readers, MetadataTokens.GetToken(handle)));
+                if(typeDefinition.GetDeclaringType().IsNil)
+                    _typeDefinitions.Add(new ILDasmTypeDefinition(typeDefinition, _readers, MetadataTokens.GetToken(handle)));
             }
             
         }

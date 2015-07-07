@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Decoding;
 using System.Reflection.Metadata.Ecma335;
+using System;
 
 namespace ILDasmLibrary
 {
@@ -20,6 +21,8 @@ namespace ILDasmLibrary
         private Dictionary<int, int> _methodImplementationDictionary;
         private int _token;
         private IEnumerable<string> _genericParameters;
+        private IEnumerable<ILDasmField> _fieldDefinitions;
+        private IEnumerable<ILDasmTypeDefinition> _nestedTypes;
 
         internal ILDasmTypeDefinition(TypeDefinition typeDef, Readers readers, int token)
             : base(readers)
@@ -86,6 +89,26 @@ namespace ILDasmLibrary
             }
         }
 
+        public bool IsNested
+        {
+            get
+            {
+                return !_typeDefinition.GetDeclaringType().IsNil;
+            }
+        }
+
+        public IEnumerable<ILDasmTypeDefinition> NestedTypes
+        {
+            get
+            {
+                if(_nestedTypes == null)
+                {
+                    _nestedTypes = GetNestedTypes();
+                }
+                return _nestedTypes;
+            }
+        }
+
         public IEnumerable<string> GenericParameters
         {
             get
@@ -113,15 +136,27 @@ namespace ILDasmLibrary
             }
         }
 
+        public IEnumerable<ILDasmField> FieldDefinitions
+        {
+            get
+            {
+                if (_fieldDefinitions == null)
+                {
+                    _fieldDefinitions = GetFieldDefinitions();
+                }
+                return _fieldDefinitions;
+            }
+        }
+
         /// <summary>
         /// Method that returns the token of a method declaration given the method token that overrides it. Returns 0 if the token doesn't represent an overriden method.
         /// </summary>
-        /// <param name="token">Token of the method body that overrides a declaration.</param>
+        /// <param name="methodBodyToken">Token of the method body that overrides a declaration.</param>
         /// <returns>token of the method declaration, 0 if there is no overriding of that method.</returns>
-        public int GetMethodDeclTokenFromImplementation(int token)
+        public int GetOverridenMethodToken(int methodBodyToken)
         {
             int result = 0;
-            MethodImplementationDictionary.TryGetValue(token, out result);
+            MethodImplementationDictionary.TryGetValue(methodBodyToken, out result);
             return result;
         }
 
@@ -163,6 +198,28 @@ namespace ILDasmLibrary
             {
                 var parameter = _readers.MdReader.GetGenericParameter(handle);
                 yield return _readers.MdReader.GetString(parameter.Name);
+            }
+        }
+
+        private IEnumerable<ILDasmField> GetFieldDefinitions()
+        {
+            foreach(var handle in _typeDefinition.GetFields())
+            {
+                var field = _readers.MdReader.GetFieldDefinition(handle);
+                yield return new ILDasmField(field, _readers.MdReader);
+            }
+        }
+
+        private IEnumerable<ILDasmTypeDefinition> GetNestedTypes()
+        {
+            foreach(var handle in _typeDefinition.GetNestedTypes())
+            {
+                if (handle.IsNil)
+                {
+                    continue;
+                }
+                var typeDefinition = _readers.MdReader.GetTypeDefinition(handle);
+                yield return new ILDasmTypeDefinition(typeDefinition, _readers, MetadataTokens.GetToken(handle));
             }
         }
 

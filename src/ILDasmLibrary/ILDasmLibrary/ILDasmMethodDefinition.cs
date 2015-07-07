@@ -203,7 +203,7 @@ namespace ILDasmLibrary
             {
                 if (_methodDeclarationToken == -1)
                 {
-                    _methodDeclarationToken = _typeDefinition.GetMethodDeclTokenFromImplementation(Token);
+                    _methodDeclarationToken = _typeDefinition.GetOverridenMethodToken(Token);
                 }
                 return _methodDeclarationToken;
             }

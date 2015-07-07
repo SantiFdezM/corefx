@@ -47,8 +47,29 @@ namespace ILDasmLibrary
         /// <returns>string representing the type</returns>
         public string DumpType(ILDasmTypeDefinition _typeDefinition, bool showBytes = false)
         {
-            // TO DO.
-            return string.Empty;
+            // TO DO: Dump fields, dump custom attributes.
+            StringBuilder sb = new StringBuilder();
+            WriteIndentation(sb);
+            sb.Append(".class ");
+            sb.Append(string.Format("/* {0} */ ", _typeDefinition.Token.ToString("X8")));
+            sb.Append(_typeDefinition.Name);
+            sb.AppendLine();
+            WriteIndentation(sb);
+            sb.AppendLine("{");
+            Indent();
+            foreach (var nestedType in _typeDefinition.NestedTypes)
+            {
+                sb.Append(DumpType(nestedType, showBytes));
+            }
+            foreach(var method in _typeDefinition.MethodDefinitions)
+            {
+                sb.Append(DumpMethod(method, showBytes));
+            }
+            Unindent();
+            WriteIndentation(sb);
+            sb.Append("} ");
+            sb.AppendLine(string.Format("// end of class {0}", _typeDefinition.FullName));
+            return sb.ToString();
         }
 
         /// <summary>
@@ -171,6 +192,7 @@ namespace ILDasmLibrary
         {
             WriteIndentation(sb);
             sb.AppendLine(_methodDefinition.GetDecodedSignature());
+            WriteIndentation(sb);
             sb.AppendLine("{");
         }
 
