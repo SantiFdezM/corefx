@@ -7,6 +7,9 @@ using System.Text;
 
 namespace ILDasmLibrary.Decoder
 {
+    /* 
+        TO DO: Change Signature decoder, to decode type with byte indicating whether should have the class or valutype prefix or not.
+    */
     public struct ILTypeProvider : ISignatureTypeProvider<ILType>
     {
         private readonly MetadataReader _reader;
@@ -200,14 +203,16 @@ namespace ILDasmLibrary.Decoder
 
         public ILType GetTypeFromDefinition(TypeDefinitionHandle handle)
         {
-            bool isClass = false;
+            bool isClass = true; // adding class prefix to all type definitions.
             bool isValueType = false;
-            return new ILType(GetFullName(Reader.GetTypeDefinition(handle), ref isClass, ref isValueType),isValueType, isClass);
+            return new ILType(GetFullName(Reader.GetTypeDefinition(handle)),isValueType, isClass);
         }
 
         public ILType GetTypeFromReference(TypeReferenceHandle handle)
         {
-            return new ILType(GetFullName(Reader.GetTypeReference(handle)),false, false);
+            bool isClass = true; // adding class prefix to all type references.
+            bool isValueType = false;
+            return new ILType(GetFullName(Reader.GetTypeReference(handle)),isValueType, isClass);
         }
 
         public string GetParameterList(MethodSignature<ILType> signature, ParameterHandleCollection? parameters = null)
@@ -280,35 +285,8 @@ namespace ILDasmLibrary.Decoder
             return String.Format("{0}.{1}", Reader.GetString(reference.Namespace), Reader.GetString(reference.Name));
         }
 
-        private string GetName(TypeDefinition type, ref bool isClass, ref bool isValueType)
+        private string GetName(TypeDefinition type)
         {
-            var declType = type.BaseType;
-            string declName = string.Empty;
-            if (!declType.IsNil)
-            {
-                if (declType.Kind == HandleKind.TypeDefinition)
-                {
-                    declName = GetName(_reader.GetTypeDefinition((TypeDefinitionHandle)declType), ref isClass, ref isValueType);
-                }
-                if (declType.Kind == HandleKind.TypeReference)
-                {
-                    Debug.Assert(true);
-                    declName = GetFullName((TypeReferenceHandle)declType);
-                }
-                if (declName == "System.ValueType") //ValueType inherits from System.Object as well so we have to reset isClass to false
-                {
-                    isValueType = true;
-                    isClass = false;
-                }
-                if (declName == "System.Object" && !isValueType)
-                {
-                    isClass = true;
-                }
-            }
-            else //interfaces indirectly inherit from System.Object
-            {
-                isClass = true;
-            }
             if (type.Namespace.IsNil)
             {
                 return Reader.GetString(type.Name);
@@ -316,20 +294,20 @@ namespace ILDasmLibrary.Decoder
             return String.Format("{0}.{1}", Reader.GetString(type.Namespace), Reader.GetString(type.Name));
         }
 
-        private string GetFullName(TypeDefinitionHandle handle, ref bool isClass, ref bool isValueType)
+        private string GetFullName(TypeDefinitionHandle handle)
         {
-            return GetFullName(Reader.GetTypeDefinition(handle), ref isClass, ref isValueType);
+            return GetFullName(Reader.GetTypeDefinition(handle));
         }
 
-        private string GetFullName(TypeDefinition type, ref bool isClass, ref bool isValueType)
+        private string GetFullName(TypeDefinition type)
         {
             var declaringType = type.GetDeclaringType();
 
             if (declaringType.IsNil)
             {
-                return GetName(type, ref isClass, ref isValueType);
+                return GetName(type);
             }
-            return String.Format("{0}/{1}", GetFullName(declaringType, ref isClass, ref isValueType), GetName(type, ref isClass, ref isValueType));
+            return String.Format("{0}/{1}", GetFullName(declaringType), GetName(type));
         }
 
         private string GetFullName(TypeReferenceHandle handle)

@@ -1,11 +1,12 @@
-﻿using System;
+﻿using ILDasmLibrary.Visitor;
+using System;
 using System.Globalization;
 using System.Reflection.Emit;
 using System.Text;
 
 namespace ILDasmLibrary.Instructions
 {
-    public class ILFloatInstruction : ILNumericValueInstruction<float>
+    public class ILFloatInstruction : ILNumericValueInstruction<float>, IVisitable
     {
         internal ILFloatInstruction(OpCode opCode, float value, int token, int size)
             :base(opCode, value, token, size)
@@ -18,26 +19,10 @@ namespace ILDasmLibrary.Instructions
             return BitConverter.ToString(data).Replace("-", string.Empty);
         }
 
-        public override void Dump(StringBuilder sb, bool showBytes = false)
+        public override void Accept(IVisitor visitor)
         {
-            if (showBytes)
-            {
-                DumpBytes(sb, Bytes);
-            }
-            sb.AppendFormat("{0,-11}", opCode);
-            if (float.IsNaN(Value))
-            {
-                var data = BitConverter.GetBytes(Value);
-                sb.Append("(");
-                sb.Append(BitConverter.ToString(data).Replace("-", " "));
-                sb.Append(")");
-                return;
-            }
-            sb.Append(Value.ToString());
-            if(Value%10 == 0)
-            {
-                sb.Append(".");
-            }
+            visitor.Visit(this);
         }
+
     }
 }

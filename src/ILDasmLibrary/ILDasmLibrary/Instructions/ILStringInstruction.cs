@@ -1,9 +1,10 @@
-﻿using System.Reflection.Emit;
+﻿using ILDasmLibrary.Visitor;
+using System.Reflection.Emit;
 using System.Text;
 
 namespace ILDasmLibrary.Instructions
 {
-    public class ILStringInstruction : ILInstructionWithValue<string>
+    public class ILStringInstruction : ILInstructionWithValue<string>, IVisitable
     {
         private readonly bool _isPrintable;
         internal ILStringInstruction(OpCode opCode,string value, int token, int size, bool isPrintable = true)
@@ -12,25 +13,17 @@ namespace ILDasmLibrary.Instructions
             _isPrintable = isPrintable;
         }
 
-        override public void Dump(StringBuilder sb, bool showBytes = false)
+        public bool IsPrintable
         {
-            if (showBytes)
+            get
             {
-                string tokenValue = string.Format("({0}){1}", (Token >> 24).ToString("X2"), Token.ToString("X8").Substring(2));
-                DumpBytes(sb, tokenValue);
+                return _isPrintable;
             }
-            sb.AppendFormat("{0,-13}", opCode);
-            if(Token >> 24 == 0x70)
-            {
-                if (_isPrintable)
-                {
-                    sb.AppendFormat("\"{0}\"", Value);
-                    return;
-                }
-                sb.AppendFormat("{0}", Value);
-                return;
-            }
-            sb.Append(Value);
+        }
+
+        public override void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this);
         }
 
     }

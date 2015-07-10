@@ -13,25 +13,19 @@ namespace ILDasmLibraryTest
         public void TestMethod1()
         {
             Stopwatch watch = new Stopwatch();
-            int i = 0;
             try
             {
-                string path = "Assemblies/mscorlib.dll";
+                string path = "Assemblies/Class1.ilexe";
                 if (!File.Exists(path))
                 {
                     Assert.Fail("File not found");
                     return;
                 }
                 var assembly = ILAssembly.Create(path);
-                var types = assembly.TypeDefinitions;
                 watch.Start();
                 using (StreamWriter file = new StreamWriter("../../Output/foo.il"))
                 {
-                    foreach (var type in types)
-                    {
-                        file.WriteLine(type.Dump(false));
-                    }
-                    watch.Stop();
+                    assembly.WriteTo(file);
                     file.WriteLine("Time elapsed: " + watch.Elapsed);
                 }
             }

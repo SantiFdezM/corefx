@@ -1,22 +1,20 @@
-﻿using System.Reflection.Emit;
+﻿using ILDasmLibrary.Visitor;
+using System.Reflection.Emit;
 using System.Text;
 
 namespace ILDasmLibrary.Instructions
 {
-    public class ILInstructionWithNoValue :ILInstruction
+    public class ILInstructionWithNoValue :ILInstruction, IVisitable
     {
         internal ILInstructionWithNoValue(OpCode opCode, int size)
             : base(opCode, size)
         {
         }
 
-        public override void Dump(StringBuilder sb, bool showBytes = false)
+        public override void Accept(IVisitor visitor)
         {
-            if (showBytes)
-            {
-                DumpBytes(sb, string.Empty);
-            }
-            sb.AppendFormat("{0}", opCode);
+            visitor.Visit(this);
         }
+       
     }
 }

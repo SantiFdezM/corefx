@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ILDasmLibrary.Visitor;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,7 +12,7 @@ namespace ILDasmLibrary
     /// <summary>
     /// Class representing an assembly.
     /// </summary>
-    public class ILAssembly : ILObject
+    public class ILAssembly : ILObject, IVisitable 
     {
         private AssemblyDefinition _assemblyDefinition;
         private string _publicKey;
@@ -186,6 +187,16 @@ namespace ILDasmLibrary
             if (build == -1) build = 0;
             if (revision == -1) revision = 0;
             return String.Format("{0}:{1}:{2}:{3}", Version.Major.ToString(), Version.Minor.ToString(), build.ToString(), revision.ToString());
+        }
+
+        public void WriteTo(TextWriter writer)
+        {
+            this.Accept(new ILVisitor(new ILVisitorOptions(true), writer));
+        }
+
+        public void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this);
         }
 
         #endregion

@@ -1,23 +1,19 @@
-﻿using System.Reflection.Emit;
+﻿using ILDasmLibrary.Visitor;
+using System.Reflection.Emit;
 using System.Text;
 
 namespace ILDasmLibrary.Instructions
 {
-    class ILShortVariableInstruction : ILInstructionWithValue<string>
+    public class ILShortVariableInstruction : ILInstructionWithValue<string>, IVisitable
     {
         internal ILShortVariableInstruction(OpCode opCode, string name, int token, int size) 
             : base(opCode, name, token, size)
         {
         }
 
-        public override void Dump(StringBuilder sb, bool showBytes = false)
+        public override void Accept(IVisitor visitor)
         {
-            if (showBytes)
-            {
-                DumpBytes(sb, Token.ToString("X2"));
-            }
-            sb.AppendFormat("{0,-11}", opCode);
-            sb.Append(Value);
+            visitor.Visit(this);
         }
     }
 }

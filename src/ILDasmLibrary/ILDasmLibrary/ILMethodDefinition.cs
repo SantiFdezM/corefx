@@ -1,5 +1,6 @@
 ﻿using ILDasmLibrary.Decoder;
 using ILDasmLibrary.Instructions;
+using ILDasmLibrary.Visitor;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -12,7 +13,7 @@ namespace ILDasmLibrary
     /// <summary>
     /// Class representing a method definition in a type whithin an assembly.
     /// </summary>
-    public class ILMethodDefinition : ILObject
+    public class ILMethodDefinition : ILObject, IVisitable
     {
         private readonly MethodDefinition _methodDefinition;
         private readonly MethodBodyBlock _methodBody;
@@ -353,19 +354,9 @@ namespace ILDasmLibrary
                 signature.Append("instance ");
             }
             signature.Append(Signature.ReturnType);
-            return String.Format(".method /*{0}*/{1}{2} {3}{4}{5}", Token.ToString("X8"), attributes, signature.ToString(), Name, GetGenericParametersString(),_provider.GetParameterList(Signature, _methodDefinition.GetParameters()));
+            return String.Format(".method /*{0}*/ {1}{2} {3}{4}{5}", Token.ToString("X8"), attributes, signature.ToString(), Name, GetGenericParametersString(),_provider.GetParameterList(Signature, _methodDefinition.GetParameters()));
         }
-
-        /// <summary>
-        /// Method that dumps the whole method, with it's signature, header and body as a string.
-        /// </summary>
-        /// <param name="showBytes">Boolean parameter that indicates if you want it to show the byte values and tokens for the instructions.</param>
-        /// <returns>A string representing the whole method</returns>
-        public string DumpMethod(bool showBytes = false)
-        {
-            return new ILWriter(indentation: 0).DumpMethod(this, showBytes);
-        }
-
+        
         /// <summary>
         /// Method that formats the Relative Virtual Address to it's hexadecimal representation.
         /// </summary>
@@ -373,6 +364,11 @@ namespace ILDasmLibrary
         public string GetFormattedRva()
         {
             return string.Format("0x{0:x8}", RelativeVirtualAddress);
+        }
+
+        public void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this);
         }
 
         #endregion

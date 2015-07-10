@@ -1,10 +1,11 @@
-﻿using System;
+﻿using ILDasmLibrary.Visitor;
+using System;
 using System.Reflection.Emit;
 using System.Text;
 
 namespace ILDasmLibrary.Instructions
 {
-    public class ILLongInstruction : ILNumericValueInstruction<long>
+    public class ILLongInstruction : ILNumericValueInstruction<long>, IVisitable
     {
         internal ILLongInstruction(OpCode opCode, long value, int token, int size)
             :base(opCode, value, token, size)
@@ -17,14 +18,9 @@ namespace ILDasmLibrary.Instructions
             return BitConverter.ToString(data).Replace("-", string.Empty);
         }
 
-        public override void Dump(StringBuilder sb, bool showBytes = false)
+        public override void Accept(IVisitor visitor)
         {
-            if (showBytes)
-            {
-                DumpBytes(sb, Bytes);
-            }
-            sb.AppendFormat("{0,-11}", opCode);
-            sb.AppendFormat("0x{0:x}",Value);
+            visitor.Visit(this);
         }
     }
 }

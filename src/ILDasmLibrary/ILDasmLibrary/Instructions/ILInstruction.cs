@@ -1,4 +1,5 @@
-﻿using System.Reflection.Emit;
+﻿using ILDasmLibrary.Visitor;
+using System.Reflection.Emit;
 using System.Text;
 
 namespace ILDasmLibrary.Instructions
@@ -6,7 +7,7 @@ namespace ILDasmLibrary.Instructions
     /// <summary>
     /// Base class for IL instructions.
     /// </summary>
-    public abstract class ILInstruction
+    public abstract class ILInstruction : IVisitable
     {
         private OpCode _opCode;
         private int _size;
@@ -32,13 +33,7 @@ namespace ILDasmLibrary.Instructions
                 return _size;
             }
         }
-
-        protected void DumpBytes(StringBuilder sb, string bytes)
-        {
-            sb.AppendFormat("/* {0,-4} | ", opCode.Value.ToString("X2"));
-            sb.Append(string.Format("{0,-16} */ ", bytes));
-        }
-
-        abstract public void Dump(StringBuilder sb, bool showBytes = false);
+        
+        abstract public void Accept(IVisitor visitor);
     }
 }

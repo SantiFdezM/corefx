@@ -30,16 +30,5 @@ namespace ILDasmLibrary.Instructions
                 return _token;
             }
         }
-
-        public override void Dump(StringBuilder sb, bool showBytes = false)
-        {
-            if (showBytes)
-            {
-                DumpBytes(sb, Token.ToString("X8"));
-            }
-            sb.AppendFormat("{0,-11}", opCode);
-            sb.Append(Value.ToString());
-        }
-
     }
 }

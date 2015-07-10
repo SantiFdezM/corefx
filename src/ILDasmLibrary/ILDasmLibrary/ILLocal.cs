@@ -1,6 +1,8 @@
-﻿namespace ILDasmLibrary
+﻿using ILDasmLibrary.Visitor;
+
+namespace ILDasmLibrary
 {
-    public struct ILLocal
+    public struct ILLocal : IVisitable
     {
         private readonly string _name;
         private readonly string _type;
@@ -25,6 +27,11 @@
             {
                 return _type;
             }
+        }
+
+        public void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this);
         }
     }
 }

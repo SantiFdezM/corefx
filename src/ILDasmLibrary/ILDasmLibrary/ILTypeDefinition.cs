@@ -6,13 +6,14 @@ using System.Reflection.Metadata.Decoding;
 using System.Reflection.Metadata.Ecma335;
 using System;
 using System.Reflection;
+using ILDasmLibrary.Visitor;
 
 namespace ILDasmLibrary
 {
     /// <summary>
     /// Class representing a type definition within an assembly.
     /// </summary>
-    public class ILTypeDefinition : ILObject
+    public class ILTypeDefinition : ILObject, IVisitable
     {
         private readonly TypeDefinition _typeDefinition;
         private string _name;
@@ -228,10 +229,11 @@ namespace ILDasmLibrary
             return result;
         }
 
-        public string Dump(bool showBytes = false)
+        public void Accept(IVisitor visitor)
         {
-            return new ILWriter(indentation: 0).DumpType(this, showBytes);
+            visitor.Visit(this);
         }
+
         #endregion
 
         #region Private Methods

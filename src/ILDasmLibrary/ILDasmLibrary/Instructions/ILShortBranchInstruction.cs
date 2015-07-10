@@ -1,23 +1,20 @@
-﻿using System.Reflection.Emit;
+﻿using ILDasmLibrary.Visitor;
+using System.Reflection.Emit;
 using System.Text;
 
 namespace ILDasmLibrary.Instructions
 {
-    public class ILShortBranchInstruction : ILInstructionWithValue<sbyte>
+    public class ILShortBranchInstruction : ILInstructionWithValue<sbyte>, IVisitable
     {
         internal ILShortBranchInstruction(OpCode opCode, sbyte value, int ilOffset, int size)
             :base(opCode, value, ilOffset, size)
         {
         }
 
-        public override void Dump(StringBuilder sb, bool showBytes = false)
+        public override void Accept(IVisitor visitor)
         {
-            if (showBytes)
-            {
-                DumpBytes(sb, Value.ToString("X2"));
-            }
-            sb.AppendFormat("{0,-11}", opCode);
-            sb.Append(string.Format("IL_{0:x4}", (Token + Value + Size)));
+            visitor.Visit(this);
         }
+        
     }
 }

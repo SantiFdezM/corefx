@@ -11,15 +11,6 @@ namespace ILDasmLibrary.Instructions
         {
         }
 
-        public override void Dump(StringBuilder sb, bool showBytes = false)
-        {
-            if (showBytes)
-            {
-                DumpBytes(sb, Bytes);
-            }
-            base.Dump(sb);
-        }
-
         public string Bytes
         {
             get
