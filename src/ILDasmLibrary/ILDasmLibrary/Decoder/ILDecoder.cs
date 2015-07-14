@@ -107,34 +107,6 @@ namespace ILDasmLibrary.Decoder
             return (token >> 24) == 0x11;
         }
 
-        public static string DecodeCustomAttribute(CustomAttribute attribute, ILMethodDefinition _methodDefinition)
-        {
-            switch(attribute.Constructor.Kind)
-            {
-                case HandleKind.MemberReference:
-                case HandleKind.MethodDefinition:
-                case HandleKind.MethodSpecification:
-                    break;
-                default:
-                    throw new Exception("Decoding custom attribute handle kind: " + attribute.Constructor.Kind);
-            }
-            var method = SolveMethodName(_methodDefinition._readers.MdReader, MetadataTokens.GetToken(attribute.Constructor), _methodDefinition.Provider);
-            return string.Format("{0} = ({1})", method, GetCustomAttributeBytes(attribute,_methodDefinition._readers.MdReader));
-        }
-
-        public static string GetCustomAttributeBytes(CustomAttribute attribute, MetadataReader MdReader)
-        {
-            if (attribute.Value.IsNil) return string.Empty;
-            var blobReader = MdReader.GetBlobReader(attribute.Value);
-            StringBuilder sb = new StringBuilder();
-            while(blobReader.Offset < blobReader.Length)
-            {
-                sb.Append(" ");
-                sb.Append(blobReader.ReadByte().ToString("X2"));
-            }
-            return sb.ToString();
-        }
-
         public static MethodSignature<ILType> DecodeMethodSignature(MethodDefinition _methodDefinition, ILTypeProvider _provider)
         {
             return SignatureDecoder.DecodeMethodSignature(_methodDefinition.Signature, _provider);
@@ -529,6 +501,16 @@ namespace ILDasmLibrary.Decoder
             MethodSignature<ILType> signature = SignatureDecoder.DecodeMethodSignature(definition.Signature, provider);
             var parentType = SignatureDecoder.DecodeType(parent, provider);
             return string.Format("{0}::{1}", parentType.ToString(false), GetString(mdReader, definition.Name));
+        }
+
+        internal static string GetCachedValue(StringHandle value, Readers _readers, ref string storage)
+        {
+            if (storage != null)
+            {
+                return storage;
+            }
+            storage = _readers.MdReader.GetString(value);
+            return storage;
         }
 
         #endregion

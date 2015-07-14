@@ -26,6 +26,7 @@ namespace ILDasmLibraryTest
                 using (StreamWriter file = new StreamWriter("../../Output/foo.il"))
                 {
                     assembly.WriteTo(file);
+                    watch.Stop();
                     file.WriteLine("Time elapsed: " + watch.Elapsed);
                 }
             }

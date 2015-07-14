@@ -13,38 +13,53 @@ namespace ILDasmLibrary
     /// <summary>
     /// Class representing a method definition in a type whithin an assembly.
     /// </summary>
-    public class ILMethodDefinition : ILObject, IVisitable
+    public struct ILMethodDefinition : IVisitable
     {
-        private readonly MethodDefinition _methodDefinition;
-        private readonly MethodBodyBlock _methodBody;
-        private readonly ILTypeProvider _provider;
+        internal Readers _readers;
+        private MethodDefinition _methodDefinition;
+        private ILTypeProvider _provider;
+        private MethodBodyBlock _methodBody;
         private string _name;
-        private int _rva = -1;
+        private int _rva;
         private MethodSignature<ILType> _signature;
         private BlobReader _ilReader;
         private ImmutableArray<ILInstruction> _instructions;
         private ILLocal[] _locals;
-        private bool isIlReaderInitialized = false;
-        private bool isSignatureInitialized = false;
         private ILParameter[] _parameters;
         private int _token;
-        private IEnumerable<CustomAttribute> _customAttributes;
+        private IEnumerable<ILCustomAttribute> _customAttributes;
         private IEnumerable<string> _genericParameters;
         private ILTypeDefinition _typeDefinition;
-        private int _methodDeclarationToken = -1;
+        private int _methodDeclarationToken;
+        private bool _isIlReaderInitialized;
+        private bool _isSignatureInitialized;
 
-        internal ILMethodDefinition(MethodDefinition methodDefinition, int token, Readers readers, ILTypeDefinition typeDefinition) 
-            : base(readers)
+        internal static ILMethodDefinition Create(MethodDefinition methodDefinition, int token, ref Readers readers, ILTypeDefinition typeDefinition)
         {
-            _methodDefinition = methodDefinition;
-            _token = token;
-            _typeDefinition = typeDefinition;
-            if(RelativeVirtualAddress != 0)
-                _methodBody = _readers.PEReader.GetMethodBody(this.RelativeVirtualAddress);
-            _provider = new ILTypeProvider(readers.MdReader);
+            ILMethodDefinition method = new ILMethodDefinition();
+            method._methodDefinition = methodDefinition;
+            method._token = token;
+            method._typeDefinition = typeDefinition;
+            method._readers = readers;
+            method._provider = readers.Provider;
+            method._rva = -1;
+            method._methodDeclarationToken = -1;
+            method._isIlReaderInitialized = false;
+            method._isSignatureInitialized = false;
+            if(method.RelativeVirtualAddress != 0)
+                method._methodBody = method._readers.PEReader.GetMethodBody(method.RelativeVirtualAddress);
+            return method;
         }
 
         #region Internal Properties
+
+        internal MethodBodyBlock MethodBody
+        {
+            get
+            {
+                return _methodBody;
+            }
+        }
 
         /// <summary>
         /// BlobReader that contains the msil instruction bytes.
@@ -53,10 +68,10 @@ namespace ILDasmLibrary
         {
             get
             {
-                if (!isIlReaderInitialized)
+                if (!_isIlReaderInitialized)
                 {
-                    isIlReaderInitialized = true;
-                    _ilReader = _methodBody.GetILReader();
+                    _isIlReaderInitialized = true;
+                    _ilReader = MethodBody.GetILReader();
                 }
                 return _ilReader;
             }
@@ -83,7 +98,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                return GetCachedValue(_methodDefinition.Name, ref _name);
+                return ILDecoder.GetCachedValue(_methodDefinition.Name, _readers, ref _name);
             }
         }
 
@@ -131,7 +146,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                return _methodBody.MaxStack;
+                return MethodBody.MaxStack;
             }
         }
 
@@ -142,9 +157,9 @@ namespace ILDasmLibrary
         {
             get
             {
-                if(!isSignatureInitialized)
+                if(!_isSignatureInitialized)
                 {
-                    isSignatureInitialized = true;
+                    _isSignatureInitialized = true;
                     _signature = ILDecoder.DecodeMethodSignature(_methodDefinition, _provider);
                 }
                 return _signature;
@@ -169,7 +184,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                return _methodBody.LocalVariablesInitialized;
+                return MethodBody.LocalVariablesInitialized;
             }
         }
 
@@ -180,7 +195,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                return !_methodBody.LocalSignature.IsNil;
+                return !MethodBody.LocalSignature.IsNil;
             }
         }
 
@@ -224,7 +239,7 @@ namespace ILDasmLibrary
         /// <summary>
         /// Custom attributes declared on the method body header.
         /// </summary>
-        public IEnumerable<CustomAttribute> CustomAttributes
+        public IEnumerable<ILCustomAttribute> CustomAttributes
         {
             get
             {
@@ -243,7 +258,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                return _methodBody.ExceptionRegions;
+                return MethodBody.ExceptionRegions;
             }
         }
 
@@ -256,7 +271,7 @@ namespace ILDasmLibrary
             {
                 if(_instructions == null)
                 {
-                    _instructions = ILDecoder.DecodeMethodBody(this).ToImmutableArray<ILInstruction>();
+                    _instructions = ILDecoder.DecodeMethodBody(this).ToImmutableArray();
                 }
                 return _instructions;
             }
@@ -286,7 +301,7 @@ namespace ILDasmLibrary
             {
                 if (_locals == null)
                 {
-                    _locals = ILDecoder.DecodeLocalSignature(_methodBody, _readers.MdReader, _provider);
+                    _locals = ILDecoder.DecodeLocalSignature(MethodBody, _readers.MdReader, _provider);
                 }
                 return _locals;
             }
@@ -395,12 +410,12 @@ namespace ILDasmLibrary
             }
             return genericParameters.ToString();
         }
-        private IEnumerable<CustomAttribute> PopulateCustomAttributes()
+        private IEnumerable<ILCustomAttribute> PopulateCustomAttributes()
         {
             foreach(var handle in _methodDefinition.GetCustomAttributes())
             {
                 var attribute = _readers.MdReader.GetCustomAttribute(handle);
-                yield return attribute;
+                yield return new ILCustomAttribute(attribute, ref _readers);
             }
         }
 

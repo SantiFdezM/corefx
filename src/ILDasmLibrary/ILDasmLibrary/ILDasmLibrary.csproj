@@ -28,6 +28,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <UseVSHostingProcess>true</UseVSHostingProcess>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.QualityTools.Testing.Fakes, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
@@ -48,12 +49,12 @@
     <Compile Include="Decoder\ILType.cs" />
     <Compile Include="Decoder\ILTypeProvider.cs" />
     <Compile Include="ILAssembly.cs" />
+    <Compile Include="ILCustomAttribute.cs" />
     <Compile Include="ILExceptionRegion.cs" />
     <Compile Include="ILField.cs" />
     <Compile Include="ILParameter.cs" />
     <Compile Include="Instructions\ILVariableInstruction.cs" />
     <Compile Include="ILMethodDefinition.cs" />
-    <Compile Include="ILObject.cs" />
     <Compile Include="ILTypeDefinition.cs" />
     <Compile Include="Decoder\ILHelpers.cs" />
     <Compile Include="Instructions\ILBranchInstruction.cs" />
@@ -73,7 +74,7 @@
     <Compile Include="ILLocal.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Readers.cs" />
-    <Compile Include="Visitor\ILVisitor.cs" />
+    <Compile Include="Visitor\ILToStringVisitor.cs" />
     <Compile Include="Visitor\ILVisitorOptions.cs" />
     <Compile Include="Visitor\IVisitable.cs" />
     <Compile Include="Visitor\IVisitor.cs" />

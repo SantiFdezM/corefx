@@ -1,4 +1,5 @@
-﻿using ILDasmLibrary.Visitor;
+﻿using ILDasmLibrary.Decoder;
+using ILDasmLibrary.Visitor;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,9 +13,10 @@ namespace ILDasmLibrary
     /// <summary>
     /// Class representing an assembly.
     /// </summary>
-    public class ILAssembly : ILObject, IVisitable 
+    public struct ILAssembly : IVisitable 
     {
-        private AssemblyDefinition _assemblyDefinition;
+        private Readers _readers;
+        private readonly AssemblyDefinition _assemblyDefinition;
         private string _publicKey;
         private IEnumerable<ILTypeDefinition> _typeDefinitions;
         private string _name;
@@ -25,10 +27,17 @@ namespace ILDasmLibrary
         private IEnumerable<CustomAttribute> _customAttribues;
 
         private ILAssembly(Readers readers) 
-            : base(readers)
         {
+            _readers = readers;
             _hashAlgorithm = -1;
             _assemblyDefinition = _readers.MdReader.GetAssemblyDefinition();
+            _publicKey = null;
+            _typeDefinitions = null;
+            _name = null;
+            _culture = null;
+            _version = null;
+            _assemblyReferences = null;
+            _customAttribues = null;
         }
 
         #region Public APIs
@@ -55,7 +64,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                return GetCachedValue(_assemblyDefinition.Name, ref _name);
+                return ILDecoder.GetCachedValue(_assemblyDefinition.Name, _readers, ref _name);
             }
         }
 
@@ -66,7 +75,7 @@ namespace ILDasmLibrary
         {
             get
             {
-                return GetCachedValue(_assemblyDefinition.Culture, ref _culture);
+                return ILDecoder.GetCachedValue(_assemblyDefinition.Culture, _readers, ref _culture);
             }
         }
 
@@ -191,7 +200,7 @@ namespace ILDasmLibrary
 
         public void WriteTo(TextWriter writer)
         {
-            this.Accept(new ILVisitor(new ILVisitorOptions(true), writer));
+            this.Accept(new ILToStringVisitor(new ILVisitorOptions(true), writer));
         }
 
         public void Accept(IVisitor visitor)
@@ -214,7 +223,7 @@ namespace ILDasmLibrary
                 }
                 var typeDefinition = _readers.MdReader.GetTypeDefinition(handle);
                 if(typeDefinition.GetDeclaringType().IsNil)
-                    yield return new ILTypeDefinition(typeDefinition, _readers, MetadataTokens.GetToken(handle));
+                    yield return new ILTypeDefinition(typeDefinition, ref _readers, MetadataTokens.GetToken(handle));
             }
         }
 
