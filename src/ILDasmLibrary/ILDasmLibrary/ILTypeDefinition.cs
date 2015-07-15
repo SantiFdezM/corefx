@@ -27,6 +27,7 @@ namespace ILDasmLibrary
         private IEnumerable<ILField> _fieldDefinitions;
         private IEnumerable<ILTypeDefinition> _nestedTypes;
         private IEnumerable<ILCustomAttribute> _customAttributes;
+        private IEnumerable<ILProperty> _properties;
         private string _baseType;
 
         internal ILTypeDefinition(TypeDefinition typeDef, ref Readers readers, int token)
@@ -44,6 +45,7 @@ namespace ILDasmLibrary
             _nestedTypes = null;
             _customAttributes = null;
             _baseType = null;
+            _properties = null;
             _methodImplementationDictionary = null;
         }
 
@@ -147,11 +149,15 @@ namespace ILDasmLibrary
             }
         }
 
-        public IEnumerable<PropertyDefinition> Properties
+        public IEnumerable<ILProperty> Properties
         {
             get
             {
-                throw new NotImplementedException("Not implemented properties on type definition");
+                if(_properties == null)
+                {
+                    _properties = GetProperties();
+                }
+                return _properties;
             }
         }
 
@@ -301,7 +307,17 @@ namespace ILDasmLibrary
                 yield return new ILCustomAttribute(attribute, ref _readers);
             }
         }
-        
+
+        private IEnumerable<ILProperty> GetProperties()
+        {
+            foreach(var handle in _typeDefinition.GetProperties())
+            {
+                var property = _readers.MdReader.GetPropertyDefinition(handle);
+                int token = MetadataTokens.GetToken(handle);
+                yield return ILProperty.Create(property, token,ref _readers, this);
+            }
+        }
+
         #endregion
 
         #region Internal Members

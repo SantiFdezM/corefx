@@ -75,18 +75,18 @@ namespace ILDasmLibrary.Decoder
         /// <returns>string that represents the type.</returns>
         public string ToString(bool showBaseType)
         {
-            string baseType = string.Empty;
-            if (IsValueType)
-            {
-                baseType = "valuetype ";
-            }
-            if (IsClassType)
-            {
-                baseType = "class ";
-            }
+            //string baseType = string.Empty;
+            //if (IsValueType)
+            //{
+            //    baseType = "valuetype ";
+            //}
+            //if (IsClassType)
+            //{
+            //    baseType = "class ";
+            //}
             if (showBaseType)
             {
-                return string.Format("{0}{1}", baseType, Name);
+                return string.Format("{0}{1}", (IsValueType ? "valuetype " : (IsClassType ? "class " : string.Empty)), Name);
             }
             return string.Format("{0}", Name);
         }

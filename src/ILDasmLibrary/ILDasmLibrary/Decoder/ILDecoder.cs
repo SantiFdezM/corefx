@@ -107,6 +107,23 @@ namespace ILDasmLibrary.Decoder
             return (token >> 24) == 0x11;
         }
 
+        public static string DecodeSignatureParamerTypes(MethodSignature<ILType> Signature)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("(");
+            var types = Signature.ParameterTypes;
+            for (int i = 0; i < types.Length; i++)
+            {
+                if (i > 0)
+                {
+                    sb.Append(",");
+                }
+                sb.Append(types[i].ToString());
+            }
+            sb.Append(")");
+            return sb.ToString();
+        }
+
         public static MethodSignature<ILType> DecodeMethodSignature(MethodDefinition _methodDefinition, ILTypeProvider _provider)
         {
             return SignatureDecoder.DecodeMethodSignature(_methodDefinition.Signature, _provider);

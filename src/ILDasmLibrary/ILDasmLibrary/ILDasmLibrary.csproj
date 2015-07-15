@@ -53,6 +53,7 @@
     <Compile Include="ILExceptionRegion.cs" />
     <Compile Include="ILField.cs" />
     <Compile Include="ILParameter.cs" />
+    <Compile Include="ILProperty.cs" />
     <Compile Include="Instructions\ILVariableInstruction.cs" />
     <Compile Include="ILMethodDefinition.cs" />
     <Compile Include="ILTypeDefinition.cs" />

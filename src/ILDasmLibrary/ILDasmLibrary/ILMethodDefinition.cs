@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Reflection;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
 namespace ILDasmLibrary
@@ -49,6 +50,13 @@ namespace ILDasmLibrary
             if(method.RelativeVirtualAddress != 0)
                 method._methodBody = method._readers.PEReader.GetMethodBody(method.RelativeVirtualAddress);
             return method;
+        }
+
+        internal static ILMethodDefinition Create(MethodDefinitionHandle methodHandle, ref Readers readers, ILTypeDefinition type)
+        {
+            MethodDefinition method = readers.MdReader.GetMethodDefinition(methodHandle);
+            int token = MetadataTokens.GetToken(methodHandle);
+            return Create(method, token, ref readers, type);
         }
 
         #region Internal Properties
@@ -99,6 +107,14 @@ namespace ILDasmLibrary
             get
             {
                 return ILDecoder.GetCachedValue(_methodDefinition.Name, _readers, ref _name);
+            }
+        }
+
+        public ILTypeDefinition DeclaringType
+        {
+            get
+            {
+                return _typeDefinition;
             }
         }
 
@@ -369,7 +385,7 @@ namespace ILDasmLibrary
                 signature.Append("instance ");
             }
             signature.Append(Signature.ReturnType);
-            return String.Format(".method /*{0}*/ {1}{2} {3}{4}{5}", Token.ToString("X8"), attributes, signature.ToString(), Name, GetGenericParametersString(),_provider.GetParameterList(Signature, _methodDefinition.GetParameters()));
+            return String.Format("{0}{1} {2}{3}{4}", attributes, signature.ToString(), Name, GetGenericParametersString(), GetParameterListString());
         }
         
         /// <summary>
@@ -409,6 +425,22 @@ namespace ILDasmLibrary
                 genericParameters.Append(">");
             }
             return genericParameters.ToString();
+        }
+
+        private string GetParameterListString()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("(");
+            for(int i = 0; i < Parameters.Length; i++)
+            {
+                if(i > 0)
+                {
+                    sb.Append(", ");
+                }
+                sb.AppendFormat("{0} {1}", Parameters[i].Type.ToString(), Parameters[i].Name);
+            }
+            sb.Append(")");
+            return sb.ToString();
         }
         private IEnumerable<ILCustomAttribute> PopulateCustomAttributes()
         {

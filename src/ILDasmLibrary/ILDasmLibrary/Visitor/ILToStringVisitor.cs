@@ -31,7 +31,7 @@ namespace ILDasmLibrary.Visitor
 
         private void WriteIndentation()
         {
-            for(int i = 0; i < _indentation; i++)
+            for (int i = 0; i < _indentation; i++)
             {
                 _writer.Write(_indent);
             }
@@ -47,7 +47,7 @@ namespace ILDasmLibrary.Visitor
 
         public void Visit(ILAssembly assembly)
         {
-            foreach(var type in assembly.TypeDefinitions)
+            foreach (var type in assembly.TypeDefinitions)
             {
                 type.Accept(this);
             }
@@ -57,27 +57,33 @@ namespace ILDasmLibrary.Visitor
         {
             WriteIndentation();
             _writer.Write(".class ");
-            if(_options.ShowBytes)
+            if (_options.ShowBytes)
                 _writer.Write("/* {0} */", typeDefinition.Token.ToString("X8"));
             _writer.Write(typeDefinition.Name);
             _writer.WriteLine();
             WriteIndentation();
             _writer.WriteLine("{");
             Indent();
-            foreach(var nestedType in typeDefinition.NestedTypes)
+            foreach (var nestedType in typeDefinition.NestedTypes)
             {
                 nestedType.Accept(this);
             }
 
-            foreach(var attribute in typeDefinition.CustomAttributes)
+            foreach (var attribute in typeDefinition.CustomAttributes)
             {
                 attribute.Accept(this);
             }
 
-            foreach(var method in typeDefinition.MethodDefinitions)
+            foreach (var method in typeDefinition.MethodDefinitions)
             {
                 method.Accept(this);
             }
+
+            foreach (var property in typeDefinition.Properties)
+            {
+                property.Accept(this);
+            }
+
             Unindent();
             WriteIndentation();
             _writer.Write("} ");
@@ -115,7 +121,56 @@ namespace ILDasmLibrary.Visitor
 
         public void Visit(ILProperty property)
         {
+            WritePropertyHeader(property);
+            WriteIndentation();
+            _writer.WriteLine("{");
+            WritePropertyBody(property);
+            WriteIndentation();
+            _writer.WriteLine("}");
+            _writer.WriteLine();
+        }
 
+        private void WritePropertyBody(ILProperty property)
+        {
+            Indent();
+            foreach(var attribute in property.CustomAttributes)
+            {
+                attribute.Accept(this);
+            }
+            if (property.HasGetter)
+            {
+                WriteIndentation();
+                _writer.Write(".get ");
+                WritePropertyAccessor(property.Getter);
+            }
+
+            if (property.HasSetter)
+            {
+                WriteIndentation();
+                _writer.Write(".set ");
+                WritePropertyAccessor(property.Setter);
+            }
+            
+            Unindent();
+        }
+
+        private void WritePropertyAccessor(ILMethodDefinition accessor)
+        {
+            if (accessor.Signature.Header.IsInstance)
+            {
+                _writer.Write("instance ");
+            }
+            _writer.Write(string.Format("{0} {1}::{2}{3}", accessor.Signature.ReturnType, accessor.DeclaringType.FullName, accessor.Name, ILDecoder.DecodeSignatureParamerTypes(accessor.Signature)));
+            _writer.WriteLine();
+        }
+
+        private void WritePropertyHeader(ILProperty property)
+        {
+            WriteIndentation();
+            _writer.Write(".property ");
+            if (_options.ShowBytes)
+                _writer.Write("/* {0} */ ", property.Token.ToString("X8"));
+            _writer.WriteLine(property.GetDecodedSignature());
         }
 
         public void Visit(ILFloatInstruction instruction)
@@ -165,7 +220,8 @@ namespace ILDasmLibrary.Visitor
         {
             if (_options.ShowBytes)
             {
-                string tokenValue = string.Format("({0}){1}", (instruction.Token >> 24).ToString("X2"), instruction.Token.ToString("X8").Substring(2));
+                int tok = instruction.Token;
+                string tokenValue = string.Format("({0}){1}", (tok >> 24).ToString("X2"), ((tok << 8) >> 8).ToString("X6"));
                 WriteBytes(tokenValue, instruction);
             }
             _writer.Write(string.Format("{0,-13}", instruction.opCode));
@@ -226,7 +282,7 @@ namespace ILDasmLibrary.Visitor
                 WriteIndentation();
                 _writer.Write(string.Format("{0,-21}", ""));
                 _writer.Write(string.Format("IL_{0:x4}", (instruction.IlOffset + instruction.Size + instruction.Jumps[i])));
-                if(i < instruction.Token - 1)
+                if (i < instruction.Token - 1)
                 {
                     _writer.Write(",");
                 }
@@ -309,6 +365,9 @@ namespace ILDasmLibrary.Visitor
         private void WriteMethodDefinition(ILMethodDefinition methodDefinition)
         {
             WriteIndentation();
+            _writer.Write(".method ");
+            if (_options.ShowBytes)
+                _writer.Write(string.Format("/* {0} */ ", methodDefinition.Token.ToString("X8")));
             _writer.WriteLine(methodDefinition.GetDecodedSignature());
             WriteIndentation();
             _writer.WriteLine("{");
@@ -317,7 +376,7 @@ namespace ILDasmLibrary.Visitor
         private void WriteMethodHeader(ILMethodDefinition methodDefinition)
         {
             WriteCustomAttributes(methodDefinition);
-            if(methodDefinition.RelativeVirtualAddress == 0)
+            if (methodDefinition.RelativeVirtualAddress == 0)
             {
                 return;
             }
@@ -357,16 +416,16 @@ namespace ILDasmLibrary.Visitor
             int i = 0;
             var locals = methodDefinition.Locals;
             _writer.Write("(");
-            foreach(var local in locals)
+            foreach (var local in locals)
             {
-                if(i > 0)
+                if (i > 0)
                 {
                     WriteIndentation();
                     _writer.Write(string.Format("{0,13}", ""));
                 }
                 _writer.Write(string.Format("[{0}] ", i));
                 local.Accept(this);
-                if(i < locals.Length - 1)
+                if (i < locals.Length - 1)
                 {
                     _writer.WriteLine(",");
                 }
@@ -397,10 +456,10 @@ namespace ILDasmLibrary.Visitor
 
         private void WriteCustomAttributes(ILMethodDefinition methodDefinition)
         {
-            foreach(var attribute in methodDefinition.CustomAttributes)
+            foreach (var attribute in methodDefinition.CustomAttributes)
             {
                 attribute.Accept(this);
-                
+
             }
         }
 
@@ -473,8 +532,8 @@ namespace ILDasmLibrary.Visitor
 
         private void WriteBytes(string bytes, ILInstruction instruction)
         {
-            _writer.Write(string.Format("/* {0,-4} | ", instruction.opCode.Value.ToString("X2")));
-            _writer.Write(string.Format("{0,-16} */ ", bytes));
+            _writer.Write(string.Format("/* {0,-4} | {1,-16} */ ", instruction.opCode.Value.ToString("X2"), bytes));
+            //_writer.Write(string.Format("{0,-16} */ ", bytes));
         }
     }
 }
