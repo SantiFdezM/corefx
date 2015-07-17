@@ -15,7 +15,7 @@ namespace ILDasmLibrary
         Fault
     }
 
-    internal struct ILExceptionRegion
+    public struct ILExceptionRegion
     {
         public readonly HandlerKind Kind;
         public readonly EntityHandle CatchType;

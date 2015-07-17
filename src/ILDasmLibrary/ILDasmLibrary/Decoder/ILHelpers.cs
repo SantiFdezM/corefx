@@ -45,8 +45,6 @@ namespace ILDasmLibrary
             "unaligned.", "unbox", "unbox.any", "unicode", "unmanaged", "unmanagedexp", "unsigned", "unused", "userdefined", "value", "valuetype", "vararg", "variant", "vector",
             "virtual", "void", "volatile.", "wchar", "winapi", "with", "wrapper", "xor" };
 
-        private readonly Regex regex = new Regex("^[a-zA-Z_][a-zA-Z0-9_]*$");
-
         private ILDecoderHelpers()
         {
             oneByteOpCodes = new OpCode[0x100];
@@ -75,7 +73,7 @@ namespace ILDasmLibrary
         internal string NormalizeString(string str)
         {
             if (str == ".ctor" || str == ".cctor") return str;
-            if (!msilKeywords.Contains(str) && regex.IsMatch(str))
+            if (!msilKeywords.Contains(str))
             {
                 return str;
             }

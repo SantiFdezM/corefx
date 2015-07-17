@@ -13,7 +13,7 @@ namespace ILDasmLibrary
     /// <summary>
     /// Class representing an assembly.
     /// </summary>
-    public struct ILAssembly : IVisitable 
+    public struct ILAssembly : IVisitable, IDisposable 
     {
         private Readers _readers;
         private readonly AssemblyDefinition _assemblyDefinition;
@@ -208,6 +208,11 @@ namespace ILDasmLibrary
             visitor.Visit(this);
         }
 
+        public void Dispose()
+        {
+            _readers.Dispose();
+        }
+
         #endregion
 
         #region Private Methods
@@ -244,6 +249,8 @@ namespace ILDasmLibrary
             sb.Append(")");
             return sb.ToString();
         }
+
+       
 
         #endregion
     }

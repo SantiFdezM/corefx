@@ -28,6 +28,7 @@ namespace ILDasmLibrary
         private IEnumerable<ILTypeDefinition> _nestedTypes;
         private IEnumerable<ILCustomAttribute> _customAttributes;
         private IEnumerable<ILProperty> _properties;
+        private IEnumerable<ILEventDefinition> _events;
         private string _baseType;
 
         internal ILTypeDefinition(TypeDefinition typeDef, ref Readers readers, int token)
@@ -46,6 +47,7 @@ namespace ILDasmLibrary
             _customAttributes = null;
             _baseType = null;
             _properties = null;
+            _events = null;
             _methodImplementationDictionary = null;
         }
 
@@ -141,11 +143,15 @@ namespace ILDasmLibrary
             }
         }
         
-        public IEnumerable<EventDefinition> Events
+        public IEnumerable<ILEventDefinition> Events
         {
             get
             {
-                throw new NotImplementedException("Not implemented Events on typedef");
+                if(_events == null)
+                {
+                    _events = GetEvents();
+                }
+                return _events;
             }
         }
 
@@ -315,6 +321,14 @@ namespace ILDasmLibrary
                 var property = _readers.MdReader.GetPropertyDefinition(handle);
                 int token = MetadataTokens.GetToken(handle);
                 yield return ILProperty.Create(property, token,ref _readers, this);
+            }
+        }
+        private IEnumerable<ILEventDefinition> GetEvents()
+        {
+            foreach (var handle in _typeDefinition.GetEvents())
+            {
+                var eventDef = _readers.MdReader.GetEventDefinition(handle);
+                yield return ILEventDefinition.Create(eventDef, MetadataTokens.GetToken(handle), ref _readers, this);
             }
         }
 

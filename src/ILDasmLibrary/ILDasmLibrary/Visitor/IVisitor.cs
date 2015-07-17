@@ -15,6 +15,7 @@ namespace ILDasmLibrary.Visitor
         void Visit(ILLocal local);
         void Visit(ILCustomAttribute attribute);
         void Visit(ILProperty property);
+        void Visit(ILEventDefinition eventDef);
         void Visit(ILBranchInstruction branchInstruction);
         void Visit(ILByteInstruction byteInstruction);
         void Visit(ILDoubleInstruction doubleInstruction);

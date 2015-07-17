@@ -3,6 +3,7 @@ using ILDasmLibrary.Instructions;
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Text;
 
 namespace ILDasmLibrary.Visitor
 {
@@ -79,6 +80,11 @@ namespace ILDasmLibrary.Visitor
                 method.Accept(this);
             }
 
+            foreach(var eventDef in typeDefinition.Events)
+            {
+                eventDef.Accept(this);
+            }
+
             foreach (var property in typeDefinition.Properties)
             {
                 property.Accept(this);
@@ -100,7 +106,7 @@ namespace ILDasmLibrary.Visitor
             int instructionIndex = 0;
             int lastRegionIndex = 0;
             if (methodDefinition.RelativeVirtualAddress != 0)
-                WriteMethodBody(methodDefinition, ILExceptionRegion.CreateRegions(methodDefinition.ExceptionRegions), ref instructionIndex, ilOffset, lastRegionIndex, out lastRegionIndex);
+                WriteMethodBody(methodDefinition, methodDefinition.ExceptionRegions, ref instructionIndex, ilOffset, lastRegionIndex, out lastRegionIndex);
             Unindent();
             WriteIndentation();
             _writer.Write("} ");
@@ -130,47 +136,49 @@ namespace ILDasmLibrary.Visitor
             _writer.WriteLine();
         }
 
-        private void WritePropertyBody(ILProperty property)
+        public void Visit(ILEventDefinition eventDef)
         {
+            WriteIndentation();
+            _writer.Write(".event ");
+            if (_options.ShowBytes)
+            {
+                _writer.Write(string.Format("/* {0} */ ", eventDef.Token.ToString("X8")));
+            }
+            _writer.Write(eventDef.Type);
+            _writer.Write(" ");
+            _writer.WriteLine(eventDef.Name);
+            WriteIndentation();
+            _writer.WriteLine("{");
             Indent();
-            foreach(var attribute in property.CustomAttributes)
-            {
-                attribute.Accept(this);
-            }
-            if (property.HasGetter)
-            {
-                WriteIndentation();
-                _writer.Write(".get ");
-                WritePropertyAccessor(property.Getter);
-            }
-
-            if (property.HasSetter)
-            {
-                WriteIndentation();
-                _writer.Write(".set ");
-                WritePropertyAccessor(property.Setter);
-            }
-            
+            WriteEventBody(eventDef);
             Unindent();
-        }
-
-        private void WritePropertyAccessor(ILMethodDefinition accessor)
-        {
-            if (accessor.Signature.Header.IsInstance)
-            {
-                _writer.Write("instance ");
-            }
-            _writer.Write(string.Format("{0} {1}::{2}{3}", accessor.Signature.ReturnType, accessor.DeclaringType.FullName, accessor.Name, ILDecoder.DecodeSignatureParamerTypes(accessor.Signature)));
+            WriteIndentation();
+            _writer.WriteLine("}");
             _writer.WriteLine();
         }
 
-        private void WritePropertyHeader(ILProperty property)
+        private void WriteEventBody(ILEventDefinition eventDef)
         {
-            WriteIndentation();
-            _writer.Write(".property ");
-            if (_options.ShowBytes)
-                _writer.Write("/* {0} */ ", property.Token.ToString("X8"));
-            _writer.WriteLine(property.GetDecodedSignature());
+            if (eventDef.HasAdder)
+            {
+                WriteIndentation();
+                _writer.Write(".addon ");
+                WritePropertyOrEventAccessor(eventDef.Adder);
+            }
+
+            if (eventDef.HasRemover)
+            {
+                WriteIndentation();
+                _writer.Write(".removeon ");
+                WritePropertyOrEventAccessor(eventDef.Remover);
+            }
+
+            if (eventDef.HasRaiser)
+            {
+                WriteIndentation();
+                _writer.Write(".fire ");
+                WritePropertyOrEventAccessor(eventDef.Raiser);
+            }
         }
 
         public void Visit(ILFloatInstruction instruction)
@@ -459,7 +467,6 @@ namespace ILDasmLibrary.Visitor
             foreach (var attribute in methodDefinition.CustomAttributes)
             {
                 attribute.Accept(this);
-
             }
         }
 
@@ -512,6 +519,68 @@ namespace ILDasmLibrary.Visitor
 
             nextRegionIndex = regionIndex;
             return ilOffset;
+        }
+
+        private void WritePropertyBody(ILProperty property)
+        {
+            Indent();
+            foreach (var attribute in property.CustomAttributes)
+            {
+                attribute.Accept(this);
+            }
+            if (property.HasGetter)
+            {
+                WriteIndentation();
+                _writer.Write(".get ");
+                WritePropertyOrEventAccessor(property.Getter);
+            }
+
+            if (property.HasSetter)
+            {
+                WriteIndentation();
+                _writer.Write(".set ");
+                WritePropertyOrEventAccessor(property.Setter);
+            }
+
+            Unindent();
+        }
+
+        private void WritePropertyOrEventAccessor(ILMethodDefinition accessor)
+        {
+            int i = 0;
+            StringBuilder genericParameters = new StringBuilder();
+            foreach (var genericParameter in accessor.GenericParameters)
+            {
+                if (i == 0)
+                {
+                    genericParameters.Append("<");
+                }
+                genericParameters.Append(genericParameter);
+                genericParameters.Append(",");
+                i++;
+            }
+
+            if (i > 0)
+            {
+                genericParameters.Length -= 1; //Delete trailing ,
+                genericParameters.Append(">");
+            }
+
+            if (accessor.Signature.Header.IsInstance)
+            {
+                _writer.Write("instance ");
+            }
+            _writer.Write(string.Format("{0} {1}::{2}{3}{4}", accessor.Signature.ReturnType, accessor.DeclaringType.FullName, accessor.Name, genericParameters.ToString(), ILDecoder.DecodeSignatureParamerTypes(accessor.Signature)));
+            _writer.WriteLine();
+        }
+
+        private void WritePropertyHeader(ILProperty property)
+        {
+            WriteIndentation();
+            _writer.Write(".property ");
+            if (_options.ShowBytes)
+                _writer.Write("/* {0} */ ", property.Token.ToString("X8"));
+            _writer.WriteLine(property.GetDecodedSignature());
         }
 
         private static bool EndFilterRegion(IReadOnlyList<ILExceptionRegion> exceptionRegions, int lastRegionIndex, int ilOffset)

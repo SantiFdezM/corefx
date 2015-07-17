@@ -34,6 +34,7 @@ namespace ILDasmLibrary
         private int _methodDeclarationToken;
         private bool _isIlReaderInitialized;
         private bool _isSignatureInitialized;
+        private IReadOnlyList<ILExceptionRegion> _exceptionRegions;
 
         internal static ILMethodDefinition Create(MethodDefinition methodDefinition, int token, ref Readers readers, ILTypeDefinition typeDefinition)
         {
@@ -52,11 +53,11 @@ namespace ILDasmLibrary
             return method;
         }
 
-        internal static ILMethodDefinition Create(MethodDefinitionHandle methodHandle, ref Readers readers, ILTypeDefinition type)
+        internal static ILMethodDefinition Create(MethodDefinitionHandle methodHandle, ref Readers readers, ILTypeDefinition typeDefinition)
         {
             MethodDefinition method = readers.MdReader.GetMethodDefinition(methodHandle);
             int token = MetadataTokens.GetToken(methodHandle);
-            return Create(method, token, ref readers, type);
+            return Create(method, token, ref readers, typeDefinition);
         }
 
         #region Internal Properties
@@ -270,11 +271,15 @@ namespace ILDasmLibrary
         /// <summary>
         /// Exception regions in the method body.
         /// </summary>
-        public ImmutableArray<ExceptionRegion> ExceptionRegions
+        public IReadOnlyList<ILExceptionRegion> ExceptionRegions
         {
             get
             {
-                return MethodBody.ExceptionRegions;
+                if(_exceptionRegions == null)
+                {
+                    _exceptionRegions = ILExceptionRegion.CreateRegions(MethodBody.ExceptionRegions);
+                }
+                return _exceptionRegions;
             }
         }
 
@@ -426,7 +431,6 @@ namespace ILDasmLibrary
             }
             return genericParameters.ToString();
         }
-
         private string GetParameterListString()
         {
             StringBuilder sb = new StringBuilder();
@@ -450,12 +454,10 @@ namespace ILDasmLibrary
                 yield return new ILCustomAttribute(attribute, ref _readers);
             }
         }
-
         private string GetAttributesForSignature()
         {
             return string.Format("{0}{1}", GetAccessibilityFlags(), GetContractFlags());
         }
-
         private string GetContractFlags()
         {
             StringBuilder sb = new StringBuilder();
@@ -501,7 +503,6 @@ namespace ILDasmLibrary
             }
             return sb.ToString();
         }
-
         /// <summary>
         /// This Method is intended to get the accessibility flags.
         /// Since the enum doesn't have flags values, the smallest values (private, famANDAssem) will always return true.
