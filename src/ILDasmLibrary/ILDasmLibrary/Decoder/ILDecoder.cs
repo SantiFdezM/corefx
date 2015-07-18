@@ -202,7 +202,7 @@ namespace ILDasmLibrary.Decoder
                         instruction = new ILIntInstruction(opCode, ilReader.ReadInt32(), -1, expectedSize + 4);
                         break;
                     case OperandType.InlineI8:
-                        instruction = new ILLongInstruction(opCode, ilReader.ReadInt64(), -1, expectedSize + 8);
+                        instruction = new ILInt64Instruction(opCode, ilReader.ReadInt64(), -1, expectedSize + 8);
                         break;
                     case OperandType.InlineR:
                         instruction = new ILDoubleInstruction(opCode, ilReader.ReadDouble(), -1, expectedSize + 8);
@@ -220,7 +220,7 @@ namespace ILDasmLibrary.Decoder
                         instruction = new ILByteInstruction(opCode, ilReader.ReadByte(), -1, expectedSize + 1);
                         break;
                     case OperandType.ShortInlineR:
-                        instruction = new ILFloatInstruction(opCode, ilReader.ReadSingle(), -1, expectedSize + 4);
+                        instruction = new ILSingleInstruction(opCode, ilReader.ReadSingle(), -1, expectedSize + 4);
                         break;
                     case OperandType.InlineNone:
                         instruction = new ILInstructionWithNoValue(opCode, expectedSize);

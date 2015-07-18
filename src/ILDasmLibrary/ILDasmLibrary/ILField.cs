@@ -10,29 +10,27 @@ namespace ILDasmLibrary
     public struct ILField
     {
         private readonly FieldDefinition _fieldDefinition;
-        private readonly MetadataReader _mdReader;
+        private readonly ILTypeDefinition _typeDefinition;
+        private Readers _readers;
         private string _name;
         private string _type;
         private string _signature;
 
-        public ILField(FieldDefinition fieldDefinition, MetadataReader mdReader)
+        internal ILField(FieldDefinition fieldDefinition, ref Readers readers, ILTypeDefinition typeDefinition)
         {
             _fieldDefinition = fieldDefinition;
             _name = null;
             _type = null;
             _signature = null;
-            _mdReader = mdReader;
+            _readers = readers;
+            _typeDefinition = typeDefinition;
         }
 
         public string Name
         {
             get
             {
-                if(_name == null)
-                {
-                    _name = _mdReader.GetString(_fieldDefinition.Name);
-                }
-                return _name;
+                return ILDecoder.GetCachedValue(_fieldDefinition.Name, _readers, ref _name);
             }
         }
 
@@ -42,7 +40,7 @@ namespace ILDasmLibrary
             {
                 if(_type == null)
                 {
-                    _type = SignatureDecoder.DecodeFieldSignature(_fieldDefinition.Signature, new ILTypeProvider(_mdReader)).ToString();
+                    _type = SignatureDecoder.DecodeFieldSignature(_fieldDefinition.Signature, _readers.Provider).ToString();
                 }
                 return _type;
             }
@@ -87,7 +85,7 @@ namespace ILDasmLibrary
                 return string.Empty;
             StringBuilder sb = new StringBuilder();
             sb.Append("marshal(");
-            var type = SignatureDecoder.DecodeType(_fieldDefinition.GetMarshallingDescriptor(), new ILTypeProvider(_mdReader));
+            var type = SignatureDecoder.DecodeType(_fieldDefinition.GetMarshallingDescriptor(), _readers.Provider);
             sb.Append(type);
             sb.Append(") ");
             return sb.ToString();

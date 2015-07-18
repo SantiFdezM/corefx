@@ -288,7 +288,7 @@ namespace ILDasmLibrary
             foreach(var handle in _typeDefinition.GetFields())
             {
                 var field = _readers.MdReader.GetFieldDefinition(handle);
-                yield return new ILField(field, _readers.MdReader);
+                yield return new ILField(field, ref _readers, this);
             }
         }
 

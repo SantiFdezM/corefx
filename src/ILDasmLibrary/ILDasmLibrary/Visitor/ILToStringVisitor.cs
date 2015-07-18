@@ -181,7 +181,7 @@ namespace ILDasmLibrary.Visitor
             }
         }
 
-        public void Visit(ILFloatInstruction instruction)
+        public void Visit(ILSingleInstruction instruction)
         {
             if (_options.ShowBytes)
             {
@@ -308,7 +308,7 @@ namespace ILDasmLibrary.Visitor
             _writer.WriteLine(instruction.Value);
         }
 
-        public void Visit(ILLongInstruction instruction)
+        public void Visit(ILInt64Instruction instruction)
         {
             if (_options.ShowBytes)
             {

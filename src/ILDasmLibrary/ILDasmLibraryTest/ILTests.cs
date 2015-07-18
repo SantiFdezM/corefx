@@ -28,6 +28,7 @@ namespace ILDasmLibraryTest
                     assembly.WriteTo(file);
                     watch.Stop();
                     file.WriteLine("Time elapsed: " + watch.Elapsed);
+                    assembly.Dispose();
                 }
             }
             catch (Exception e)

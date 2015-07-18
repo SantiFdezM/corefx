@@ -19,10 +19,10 @@ namespace ILDasmLibrary.Visitor
         void Visit(ILBranchInstruction branchInstruction);
         void Visit(ILByteInstruction byteInstruction);
         void Visit(ILDoubleInstruction doubleInstruction);
-        void Visit(ILFloatInstruction floatInstruction);
+        void Visit(ILSingleInstruction floatInstruction);
         void Visit(ILInstructionWithNoValue instruction);
         void Visit(ILIntInstruction intInstruction);
-        void Visit(ILLongInstruction longInstruction);
+        void Visit(ILInt64Instruction longInstruction);
         void Visit(ILShortBranchInstruction shortBranchInstruction);
         void Visit(ILShortVariableInstruction shortVariableInstruction);
         void Visit(ILStringInstruction stringInstruction);
