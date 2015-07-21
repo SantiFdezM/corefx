@@ -10,6 +10,7 @@ namespace ILDasmLibrary.Visitor
     public interface IVisitor
     {
         void Visit(ILAssembly assembly);
+        void Visit(ILAssemblyReference assemblyReference);
         void Visit(ILTypeDefinition typeDefinition);
         void Visit(ILMethodDefinition methodDefinition);
         void Visit(ILLocal local);
@@ -21,10 +22,10 @@ namespace ILDasmLibrary.Visitor
         void Visit(ILDoubleInstruction doubleInstruction);
         void Visit(ILSingleInstruction floatInstruction);
         void Visit(ILInstructionWithNoValue instruction);
-        void Visit(ILIntInstruction intInstruction);
+        void Visit(ILInt32Instruction intInstruction);
         void Visit(ILInt64Instruction longInstruction);
-        void Visit(ILShortBranchInstruction shortBranchInstruction);
-        void Visit(ILShortVariableInstruction shortVariableInstruction);
+        void Visit(ILInt16BranchInstruction shortBranchInstruction);
+        void Visit(ILInt16VariableInstruction shortVariableInstruction);
         void Visit(ILStringInstruction stringInstruction);
         void Visit(ILSwitchInstruction switchInstruction);
         void Visit(ILVariableInstruction variableInstruction);

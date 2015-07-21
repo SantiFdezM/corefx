@@ -1,6 +1,5 @@
 ﻿using ILDasmLibrary.Visitor;
 using System.Reflection.Emit;
-using System.Text;
 
 namespace ILDasmLibrary.Instructions
 {

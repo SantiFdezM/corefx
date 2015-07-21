@@ -55,6 +55,7 @@
     <Compile Include="ILEventDefinition.cs" />
     <Compile Include="ILExceptionRegion.cs" />
     <Compile Include="ILField.cs" />
+    <Compile Include="ILModuleDefinition.cs" />
     <Compile Include="ILParameter.cs" />
     <Compile Include="ILProperty.cs" />
     <Compile Include="Instructions\ILVariableInstruction.cs" />
@@ -64,13 +65,13 @@
     <Compile Include="Instructions\ILBranchInstruction.cs" />
     <Compile Include="Instructions\ILByteInstruction.cs" />
     <Compile Include="Instructions\ILDoubleInstruction.cs" />
-    <Compile Include="Instructions\ILFloatInstruction.cs" />
+    <Compile Include="Instructions\ILSingleInstruction.cs" />
     <Compile Include="Instructions\ILInstructionWithNoValue.cs" />
-    <Compile Include="Instructions\ILIntInstruction.cs" />
-    <Compile Include="Instructions\ILLongInstruction.cs" />
+    <Compile Include="Instructions\ILInt32Instruction.cs" />
+    <Compile Include="Instructions\ILInt64Instruction.cs" />
     <Compile Include="Instructions\ILNumericValueInstruction.cs" />
-    <Compile Include="Instructions\ILShortBranchInstruction.cs" />
-    <Compile Include="Instructions\ILShortVariableInstruction.cs" />
+    <Compile Include="Instructions\ILInt16BranchInstruction.cs" />
+    <Compile Include="Instructions\ILInt16VariableInstruction.cs" />
     <Compile Include="Instructions\ILStringInstruction.cs" />
     <Compile Include="Instructions\ILSwitchInstruction.cs" />
     <Compile Include="Instructions\ILInstruction.cs" />
@@ -84,6 +85,7 @@
     <Compile Include="Visitor\IVisitor.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

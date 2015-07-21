@@ -1,32 +1,45 @@
 ﻿using ILDasmLibrary.Decoder;
+using ILDasmLibrary.Visitor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace ILDasmLibrary
 {
-    public struct ILAssemblyReference
+    public struct ILAssemblyReference: IVisitable
     {
         private Readers _readers;
         private AssemblyReference _assemblyRef;
+        private ILAssembly _assemblyDefinition;
         private string _culture;
         private string _name;
         private Version _version;
         private IEnumerable<ILCustomAttribute> _customAttributes;
         private byte[] _hashValue;
         private byte[] _publicKeyOrToken;
+        private int _token;
 
-        internal ILAssemblyReference Create(AssemblyReference assemblyRef, ref Readers readers)
+        internal static ILAssemblyReference Create(AssemblyReference assemblyRef, int token, ref Readers readers, ILAssembly assemblyDefinition)
         {
             ILAssemblyReference assembly = new ILAssemblyReference();
             assembly._assemblyRef = assemblyRef;
+            assembly._token = token;
             assembly._readers = readers;
+            assembly._assemblyDefinition = assemblyDefinition;
             return assembly;
         }
 
+        public ILAssembly AssemblyDefinition
+        {
+            get
+            {
+                return _assemblyDefinition;
+            }
+        }
         public string Name
         {
             get
@@ -64,6 +77,94 @@ namespace ILDasmLibrary
                     _customAttributes = GetCustomAttributes();
                 }
                 return _customAttributes;
+            }
+        }
+
+        public bool HasHashValue
+        {
+            get
+            {
+                return HashValue.Length != 0;
+            }
+        }
+
+        public bool HasPublicKeyOrToken
+        {
+            get
+            {
+                return PublicKeyOrToken.Length != 0;
+            }
+        }
+
+        public bool HasCulture
+        {
+            get
+            {
+                return !_assemblyRef.Culture.IsNil;
+            }
+        }
+
+        public AssemblyFlags Flags
+        {
+            get
+            {
+                return _assemblyRef.Flags;
+            }
+        }
+
+        public byte[] HashValue
+        {
+            get
+            {
+                if(_hashValue == null)
+                {
+                    _hashValue = _readers.MdReader.GetBlobBytes(_assemblyRef.HashValue);
+                }
+                return _hashValue;
+            }
+        }
+
+        public byte[] PublicKeyOrToken
+        {
+            get
+            {
+                if(_publicKeyOrToken == null)
+                {
+                    _publicKeyOrToken = _readers.MdReader.GetBlobBytes(_assemblyRef.PublicKeyOrToken);
+                }
+                return _publicKeyOrToken;
+            }
+        }
+
+        public string GetHashValueString()
+        {
+            if (!HasHashValue)
+                return string.Empty;
+            return ILDecoder.GetByteArrayString(HashValue);
+        }
+
+        public string GetPublicKeyOrTokenString()
+        {
+            if (!HasPublicKeyOrToken)
+                return string.Empty;
+            return ILDecoder.GetByteArrayString(PublicKeyOrToken);
+        }
+
+        public string GetFormattedVersion()
+        {
+            return ILDecoder.GetVersionString(Version);
+        }
+
+        public void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
+
+        internal int Token
+        {
+            get
+            {
+                return _token;
             }
         }
 

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
@@ -16,35 +17,36 @@ namespace ILDasmLibrary
     public struct ILAssembly : IVisitable, IDisposable 
     {
         private Readers _readers;
-        private readonly AssemblyDefinition _assemblyDefinition;
-        private string _publicKey;
+        private AssemblyDefinition _assemblyDefinition;
+        private byte[] _publicKey;
         private IEnumerable<ILTypeDefinition> _typeDefinitions;
         private string _name;
         private string _culture;
         private int _hashAlgorithm;
         private Version _version;
-        private IEnumerable<AssemblyReference> _assemblyReferences;
-        private IEnumerable<CustomAttribute> _customAttribues;
-
-        private ILAssembly(Readers readers) 
-        {
-            _readers = readers;
-            _hashAlgorithm = -1;
-            _assemblyDefinition = _readers.MdReader.GetAssemblyDefinition();
-            _publicKey = null;
-            _typeDefinitions = null;
-            _name = null;
-            _culture = null;
-            _version = null;
-            _assemblyReferences = null;
-            _customAttribues = null;
-        }
+        private IEnumerable<ILAssemblyReference> _assemblyReferences;
+        private IEnumerable<ILCustomAttribute> _customAttribues;
+        private ILModuleDefinition _moduleDefinition;
+        private bool _isModuleInitialized;
 
         #region Public APIs
 
         public static ILAssembly Create(Stream stream)
         {
-            return new ILAssembly(Readers.Create(stream));
+            ILAssembly assembly = new ILAssembly();
+            Readers readers = Readers.Create(stream);
+            assembly._readers = readers;
+            assembly._hashAlgorithm = -1;
+            assembly._assemblyDefinition = readers.MdReader.GetAssemblyDefinition();
+            assembly._publicKey = null;
+            assembly._typeDefinitions = null;
+            assembly._name = null;
+            assembly._culture = null;
+            assembly._version = null;
+            assembly._assemblyReferences = null;
+            assembly._customAttribues = null;
+            assembly._isModuleInitialized = false;
+            return assembly;
         }
 
         public static ILAssembly Create(string path)
@@ -114,19 +116,64 @@ namespace ILDasmLibrary
             }
         }
 
+        public ILModuleDefinition ModuleDefinition
+        {
+            get
+            {
+                if (!_isModuleInitialized)
+                {
+                    _isModuleInitialized = true;
+                    _moduleDefinition = ILModuleDefinition.Create(_readers.MdReader.GetModuleDefinition(), ref _readers);
+                }
+                return _moduleDefinition;
+            }
+        }
+
         /// <summary>
         /// A binary object representing a public encryption key for a strong-named assembly.
         /// Represented as a byte array on a string format (00 00 00 00 00 00 00 00 00)
         /// </summary>
-        public string PublicKey
+        public byte[] PublicKey
         {
             get
             {
                 if (_publicKey == null)
                 {
-                    _publicKey = GetPublicKey();
+                    _publicKey = _readers.MdReader.GetBlobBytes(_assemblyDefinition.PublicKey);
                 }
                 return _publicKey;
+            }
+        }
+
+        public bool HasPublicKey
+        {
+            get
+            {
+                return PublicKey.Length != 0;
+            }
+        }
+        
+        public bool HasCulture
+        {
+            get
+            {
+                return !_assemblyDefinition.Culture.IsNil;
+            }
+        }
+
+        public bool IsDll
+        {
+            get
+            {
+                return _readers.PEReader.PEHeaders.IsDll;
+            }
+        }
+
+        public bool IsExe
+        {
+            get
+            {
+                return _readers.PEReader.PEHeaders.IsExe;
             }
         }
 
@@ -137,9 +184,9 @@ namespace ILDasmLibrary
         {
             get
             {
-                if (_assemblyDefinition.Flags.HasFlag(System.Reflection.AssemblyFlags.Retargetable))
+                if (_assemblyDefinition.Flags.HasFlag(AssemblyFlags.Retargetable))
                 {
-                    return "retargetable";
+                    return "retargetable ";
                 }
                 return string.Empty;
             }
@@ -160,20 +207,35 @@ namespace ILDasmLibrary
             }
         }
 
-        public IEnumerable<AssemblyReference> AssemblyReferences
+        public IEnumerable<ILAssemblyReference> AssemblyReferences
         {
             get
             {
-                throw new NotImplementedException("AssemblyReferences for assembly");
+                if(_assemblyReferences == null)
+                {
+                    _assemblyReferences = GetAssemblyReferences();
+                }
+                return _assemblyReferences;
             }
         }
 
-        public IEnumerable<CustomAttribute> CustomAttributes
+        public IEnumerable<ILCustomAttribute> CustomAttributes
         {
             get
             {
-                throw new NotImplementedException("Custom Attributes on assembly def");
+                if(_customAttribues == null)
+                {
+                    _customAttribues = GetCustomAttributes();
+                }
+                return _customAttribues;
             }
+        }
+
+        public string GetPublicKeyString()
+        {
+            if (!HasPublicKey)
+                return string.Empty;
+            return ILDecoder.GetByteArrayString(PublicKey);
         }
 
         /// <summary>
@@ -191,11 +253,7 @@ namespace ILDasmLibrary
         /// <returns>string representing the version.</returns>
         public string GetFormattedVersion()
         {
-            int build = Version.Build;
-            int revision = Version.Revision;
-            if (build == -1) build = 0;
-            if (revision == -1) revision = 0;
-            return String.Format("{0}:{1}:{2}:{3}", Version.Major.ToString(), Version.Minor.ToString(), build.ToString(), revision.ToString());
+            return ILDecoder.GetVersionString(Version);
         }
 
         public void WriteTo(TextWriter writer)
@@ -232,25 +290,24 @@ namespace ILDasmLibrary
             }
         }
 
-        private string GetPublicKey()
+        private IEnumerable<ILAssemblyReference> GetAssemblyReferences()
         {
-            var bytes = _readers.MdReader.GetBlobBytes(_assemblyDefinition.PublicKey);
-            if (bytes.Length == 0)
+            foreach(var handle in _readers.MdReader.AssemblyReferences)
             {
-                return string.Empty;
+                var assembly = _readers.MdReader.GetAssemblyReference(handle);
+                int token = MetadataTokens.GetToken(handle);
+                yield return ILAssemblyReference.Create(assembly, token, ref _readers, this);
             }
-            StringBuilder sb = new StringBuilder();
-            sb.Append("(");
-            foreach (byte _byte in bytes)
-            {
-                sb.Append(String.Format("{0:x2}",_byte));                  
-                sb.Append(" ");
-            }
-            sb.Append(")");
-            return sb.ToString();
         }
 
-       
+        private IEnumerable<ILCustomAttribute> GetCustomAttributes()
+        {
+            foreach(var handle in _assemblyDefinition.GetCustomAttributes())
+            {
+                var attribute = _readers.MdReader.GetCustomAttribute(handle);
+                yield return new ILCustomAttribute(attribute, ref _readers);
+            }
+        }
 
         #endregion
     }

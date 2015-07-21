@@ -107,6 +107,31 @@ namespace ILDasmLibrary.Decoder
             return (token >> 24) == 0x11;
         }
 
+        public static string GetByteArrayString(byte[] array)
+        {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < array.Length; i++)
+            {
+                if (i == 0)
+                {
+                    sb.Append("( ");
+                }
+                sb.Append(array[i].ToString("X2"));
+                sb.Append(" ");
+            }
+            sb.Append(")");
+            return sb.ToString();
+        }
+
+        public static string GetVersionString(Version version)
+        {
+            int build = version.Build;
+            int revision = version.Revision;
+            if (build == -1) build = 0;
+            if (revision == -1) revision = 0;
+            return String.Format("{0}:{1}:{2}:{3}", version.Major.ToString(), version.Minor.ToString(), build.ToString(), revision.ToString());
+        }
+
         public static string DecodeSignatureParamerTypes(MethodSignature<ILType> Signature)
         {
             StringBuilder sb = new StringBuilder();
@@ -199,7 +224,7 @@ namespace ILDasmLibrary.Decoder
                         instruction = new ILStringInstruction(opCode, tokenType, intOperand, expectedSize + 4);
                         break;
                     case OperandType.InlineI:
-                        instruction = new ILIntInstruction(opCode, ilReader.ReadInt32(), -1, expectedSize + 4);
+                        instruction = new ILInt32Instruction(opCode, ilReader.ReadInt32(), -1, expectedSize + 4);
                         break;
                     case OperandType.InlineI8:
                         instruction = new ILInt64Instruction(opCode, ilReader.ReadInt64(), -1, expectedSize + 8);
@@ -211,7 +236,7 @@ namespace ILDasmLibrary.Decoder
                         instruction = CreateSwitchInstruction(ref ilReader, expectedSize, ilOffset, opCode);
                         break;
                     case OperandType.ShortInlineBrTarget:
-                        instruction = new ILShortBranchInstruction(opCode, ilReader.ReadSByte(), ilOffset, expectedSize + 1);
+                        instruction = new ILInt16BranchInstruction(opCode, ilReader.ReadSByte(), ilOffset, expectedSize + 1);
                         break;
                     case OperandType.InlineBrTarget:
                         instruction = new ILBranchInstruction(opCode, ilReader.ReadInt32(), ilOffset, expectedSize + 4);
@@ -227,7 +252,7 @@ namespace ILDasmLibrary.Decoder
                         break;
                     case OperandType.ShortInlineVar:
                         byte token = ilReader.ReadByte();
-                        instruction = new ILShortVariableInstruction(opCode, GetVariableName(opCode, token, _methodDefinition), token, expectedSize + 1);
+                        instruction = new ILInt16VariableInstruction(opCode, GetVariableName(opCode, token, _methodDefinition), token, expectedSize + 1);
                         break;
                     case OperandType.InlineVar:
                         shortOperand = ilReader.ReadUInt16();

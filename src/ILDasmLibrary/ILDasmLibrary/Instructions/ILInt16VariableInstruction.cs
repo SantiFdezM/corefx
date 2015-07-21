@@ -4,9 +4,9 @@ using System.Text;
 
 namespace ILDasmLibrary.Instructions
 {
-    public class ILShortVariableInstruction : ILInstructionWithValue<string>, IVisitable
+    public class ILInt16VariableInstruction : ILInstructionWithValue<string>, IVisitable
     {
-        internal ILShortVariableInstruction(OpCode opCode, string name, int token, int size) 
+        internal ILInt16VariableInstruction(OpCode opCode, string name, int token, int size) 
             : base(opCode, name, token, size)
         {
         }

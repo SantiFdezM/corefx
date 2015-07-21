@@ -48,10 +48,115 @@ namespace ILDasmLibrary.Visitor
 
         public void Visit(ILAssembly assembly)
         {
+            _writer.WriteLine();
+            _writer.WriteLine("//  Copyright (c) Microsoft Corporation.  All rights reserved.");
+            _writer.WriteLine();
+            _writer.WriteLine();
+            _writer.WriteLine();
+
+            foreach (var assemblyRef in assembly.AssemblyReferences)
+            {
+                assemblyRef.Accept(this);
+            }
+
+            WriteAssemblyDefinition(assembly);
+
+            _writer.WriteLine();
+            _writer.WriteLine("// =============== CLASS MEMBERS DECLARATION ===================");
+            _writer.WriteLine();
+
             foreach (var type in assembly.TypeDefinitions)
             {
                 type.Accept(this);
             }
+        }
+
+        private void WriteAssemblyDefinition(ILAssembly assembly)
+        {
+            WriteIndentation();
+            _writer.Write(".assembly ");
+            _writer.Write(assembly.Flags);
+            _writer.WriteLine(assembly.Name);
+            WriteIndentation();
+            _writer.WriteLine("{");
+            Indent();
+
+            foreach(var attribute in assembly.CustomAttributes)
+            {
+                attribute.Accept(this);
+            }
+            _writer.WriteLine();
+            _writer.WriteLine();
+
+            WriteIndentation();
+            _writer.Write(".hash algorithm ");
+            _writer.WriteLine(assembly.GetFormattedHashAlgorithm());
+
+            if (assembly.HasPublicKey)
+            {
+                WriteIndentation();
+                _writer.Write(".publickey = ");
+                _writer.WriteLine(assembly.GetPublicKeyString());
+            }
+
+            if (assembly.HasCulture)
+            {
+                WriteIndentation();
+                _writer.Write(".locale ");
+                _writer.WriteLine("'{0}'", assembly.Culture);
+            }
+
+            WriteIndentation();
+            _writer.WriteLine(string.Format(".ver {0}", assembly.GetFormattedVersion()));
+            Unindent();
+            WriteIndentation();
+            _writer.WriteLine("}");
+            WriteIndentation();
+            _writer.Write(".module ");
+            _writer.WriteLine(assembly.ModuleDefinition.Name);
+        }
+
+        public void Visit(ILAssemblyReference assemblyReference)
+        {
+            WriteIndentation();
+            _writer.Write(".assembly extern ");
+            if (_options.ShowBytes)
+                _writer.Write(string.Format("/* {0} */ ", assemblyReference.Token.ToString("X8")));
+            _writer.WriteLine(assemblyReference.Name);
+            _writer.WriteLine("{");
+            Indent();
+            if (assemblyReference.HasPublicKeyOrToken)
+            {
+                WriteIndentation();
+                _writer.Write(".publickeytoken = ");
+                _writer.WriteLine(assemblyReference.GetPublicKeyOrTokenString());
+            }
+
+            if (assemblyReference.HasCulture)
+            {
+                WriteIndentation();
+                _writer.Write(".locale ");
+                _writer.WriteLine("'{0}'", assemblyReference.Culture);
+            }
+
+            if (assemblyReference.HasHashValue)
+            {
+                WriteIndentation();
+                _writer.Write(".hash = ");
+                _writer.WriteLine(assemblyReference.GetHashValueString());
+            }
+
+            WriteIndentation();
+            _writer.WriteLine(string.Format(".ver {0}", assemblyReference.GetFormattedVersion()));
+
+            foreach(var attribute in assemblyReference.CustomAttributes)
+            {
+                attribute.Accept(this);
+            }
+
+            Unindent();
+            WriteIndentation();
+            _writer.WriteLine("}");
         }
 
         public void Visit(ILTypeDefinition typeDefinition)
@@ -204,7 +309,7 @@ namespace ILDasmLibrary.Visitor
             _writer.WriteLine();
         }
 
-        public void Visit(ILIntInstruction instruction)
+        public void Visit(ILInt32Instruction instruction)
         {
             if (_options.ShowBytes)
             {
@@ -214,7 +319,7 @@ namespace ILDasmLibrary.Visitor
             _writer.WriteLine(instruction.Value.ToString());
         }
 
-        public void Visit(ILShortBranchInstruction instruction)
+        public void Visit(ILInt16BranchInstruction instruction)
         {
             if (_options.ShowBytes)
             {
@@ -298,7 +403,7 @@ namespace ILDasmLibrary.Visitor
             _writer.WriteLine(")");
         }
 
-        public void Visit(ILShortVariableInstruction instruction)
+        public void Visit(ILInt16VariableInstruction instruction)
         {
             if (_options.ShowBytes)
             {
