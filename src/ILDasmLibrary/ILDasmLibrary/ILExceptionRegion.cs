@@ -62,7 +62,7 @@ namespace ILDasmLibrary
                 case HandlerKind.Fault:
                     return "fault";
                 case HandlerKind.Catch:
-                    return string.Format("catch {0}", ILDecoder.DecodeType(CatchType, provider));
+                    return string.Format("catch {0}", ILDecoder.DecodeType(CatchType, provider).ToString(false));
                 default:
                     throw new InvalidOperationException("Handler Kind doesn't exist.");
             }

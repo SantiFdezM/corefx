@@ -316,9 +316,9 @@ namespace ILDasmLibrary.Decoder
             }
         }
 
-        internal static string DecodeType(EntityHandle catchType, ILTypeProvider provider)
+        internal static ILType DecodeType(EntityHandle type, ILTypeProvider provider)
         {
-            return SignatureDecoder.DecodeType(catchType, provider).ToString();
+            return SignatureDecoder.DecodeType(type, provider);
         }
 
         private static string GetSignature(MetadataReader mdReader, int intOperand, ILTypeProvider provider)
@@ -455,7 +455,7 @@ namespace ILDasmLibrary.Decoder
             else
             {
                 var parentHandle = MetadataTokens.TypeReferenceHandle(parentToken);
-                type = SignatureDecoder.DecodeType(parentHandle, provider).ToString();
+                type = SignatureDecoder.DecodeType(parentHandle, provider).ToString(false);
             }
             string signatureValue;
             string parameters = string.Empty;

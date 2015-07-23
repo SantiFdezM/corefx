@@ -13,6 +13,7 @@ namespace ILDasmLibrary.Visitor
         void Visit(ILAssemblyReference assemblyReference);
         void Visit(ILTypeDefinition typeDefinition);
         void Visit(ILMethodDefinition methodDefinition);
+        void Visit(ILField field);
         void Visit(ILLocal local);
         void Visit(ILCustomAttribute attribute);
         void Visit(ILProperty property);

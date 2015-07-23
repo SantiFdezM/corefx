@@ -253,6 +253,14 @@ namespace ILDasmLibrary
             }
         }
 
+        public MethodImplAttributes ImplAttributes
+        {
+            get
+            {
+                return _methodDefinition.ImplAttributes;
+            }
+        }
+
         /// <summary>
         /// Custom attributes declared on the method body header.
         /// </summary>
@@ -390,7 +398,7 @@ namespace ILDasmLibrary
                 signature.Append("instance ");
             }
             signature.Append(Signature.ReturnType);
-            return String.Format("{0}{1} {2}{3}{4}", attributes, signature.ToString(), Name, GetGenericParametersString(), GetParameterListString());
+            return String.Format("{0}{1} {2}{3}{4} {5}", attributes, signature.ToString(), Name, GetGenericParametersString(), GetParameterListString(), GetImplementationFlags());
         }
         
         /// <summary>
@@ -538,6 +546,45 @@ namespace ILDasmLibrary
                 return "private ";
             }
             return string.Empty;
+        }
+
+        private string GetImplementationFlags()
+        {
+            return string.Format("{0} {1}", GetCodeType(), GetCodeManagement());
+        }
+
+        private string GetCodeType()
+        {
+            if (ImplAttributes.HasFlag(MethodImplAttributes.Runtime))
+            {
+                return "runtime";
+            }
+            if (ImplAttributes.HasFlag(MethodImplAttributes.OPTIL))
+            {
+                return "optil";
+            }
+            if (ImplAttributes.HasFlag(MethodImplAttributes.Native))
+            {
+                return "native";
+            }
+            if (ImplAttributes.HasFlag(MethodImplAttributes.IL))
+            {
+                return "cil";
+            }
+            throw new BadImageFormatException("Invalid Code Type flag");
+        }
+
+        private string GetCodeManagement()
+        {
+            if (ImplAttributes.HasFlag(MethodImplAttributes.Managed))
+            {
+                return "managed";
+            }
+            if (ImplAttributes.HasFlag(MethodImplAttributes.Unmanaged))
+            {
+                return "unmanaged";
+            }
+            throw new BadImageFormatException("Invalid code management flag");
         }
         #endregion
     }

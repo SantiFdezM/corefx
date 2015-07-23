@@ -15,7 +15,7 @@ namespace ILDasmLibraryTest
             Stopwatch watch = new Stopwatch();
             try
             {
-                string path = "Assemblies/Class1.ilexe";
+                string path = "Assemblies/Demo1.exe";
                 if (!File.Exists(path))
                 {
                     Assert.Fail("File not found");

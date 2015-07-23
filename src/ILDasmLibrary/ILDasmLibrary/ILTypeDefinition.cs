@@ -16,7 +16,7 @@ namespace ILDasmLibrary
     public struct ILTypeDefinition : IVisitable
     {
         private Readers _readers;
-        private readonly TypeDefinition _typeDefinition;
+        private TypeDefinition _typeDefinition;
         private string _name;
         private string _fullName;
         private string _namespace;
@@ -30,25 +30,15 @@ namespace ILDasmLibrary
         private IEnumerable<ILProperty> _properties;
         private IEnumerable<ILEventDefinition> _events;
         private string _baseType;
+        private string _signature;
 
-        internal ILTypeDefinition(TypeDefinition typeDef, ref Readers readers, int token)
+        internal static ILTypeDefinition Create(TypeDefinition typeDef, ref Readers readers, int token)
         {
-            _typeDefinition = typeDef;
-            _token = token;
-            _readers = readers;
-            _name = null;
-            _fullName = null;
-            _namespace = null;
-            _methodDefinitions = null;
-            _methodDefinitions = null;
-            _genericParameters = null;
-            _fieldDefinitions = null;
-            _nestedTypes = null;
-            _customAttributes = null;
-            _baseType = null;
-            _properties = null;
-            _events = null;
-            _methodImplementationDictionary = null;
+            ILTypeDefinition type = new ILTypeDefinition();
+            type._typeDefinition = typeDef;
+            type._token = token;
+            type._readers = readers;
+            return type;
         }
 
         #region Public APIs
@@ -90,6 +80,18 @@ namespace ILDasmLibrary
             }
         }
 
+        public string Signature
+        {
+            get
+            {
+                if(_signature == null)
+                {
+                    _signature = GetSignature();
+                }
+                return _signature;
+            }
+        }
+
         public bool IsGeneric
         {
             get
@@ -114,6 +116,14 @@ namespace ILDasmLibrary
             }
         }
 
+        public bool HasBaseType
+        {
+            get
+            {
+                return !_typeDefinition.BaseType.IsNil;
+            }
+        }
+
         public string BaseType
         {
             get
@@ -121,6 +131,7 @@ namespace ILDasmLibrary
                 if (IsInterface) return null;
                 if(_baseType == null)
                 {
+                    //To do this Entity (typedef or typeref).
                     _baseType = SignatureDecoder.DecodeType(_typeDefinition.BaseType, _readers.Provider).ToString(false);
                 }
                 return _baseType;
@@ -259,7 +270,6 @@ namespace ILDasmLibrary
                 yield return ILMethodDefinition.Create(method, MetadataTokens.GetToken(handle), ref _readers, this);
             }
         }
-
         private void PopulateMethodImplementationDictionary()
         {
             var implementations = _typeDefinition.GetMethodImplementations();
@@ -273,7 +283,6 @@ namespace ILDasmLibrary
             }
             _methodImplementationDictionary = dictionary;
         }
-
         private IEnumerable<string> GetGenericParameters()
         {
             foreach(var handle in _typeDefinition.GetGenericParameters())
@@ -282,16 +291,15 @@ namespace ILDasmLibrary
                 yield return _readers.MdReader.GetString(parameter.Name);
             }
         }
-
         private IEnumerable<ILField> GetFieldDefinitions()
         {
             foreach(var handle in _typeDefinition.GetFields())
             {
                 var field = _readers.MdReader.GetFieldDefinition(handle);
-                yield return new ILField(field, ref _readers, this);
+                var token = MetadataTokens.GetToken(handle);
+                yield return new ILField(field, token, ref _readers, this);
             }
         }
-
         private IEnumerable<ILTypeDefinition> GetNestedTypes()
         {
             foreach(var handle in _typeDefinition.GetNestedTypes())
@@ -301,10 +309,9 @@ namespace ILDasmLibrary
                     continue;
                 }
                 var typeDefinition = _readers.MdReader.GetTypeDefinition(handle);
-                yield return new ILTypeDefinition(typeDefinition, ref _readers, MetadataTokens.GetToken(handle));
+                yield return Create(typeDefinition, ref _readers, MetadataTokens.GetToken(handle));
             }
         }
-
         private IEnumerable<ILCustomAttribute> GetCustomAttributes()
         {
             foreach(var handle in _typeDefinition.GetCustomAttributes())
@@ -313,7 +320,6 @@ namespace ILDasmLibrary
                 yield return new ILCustomAttribute(attribute, ref _readers);
             }
         }
-
         private IEnumerable<ILProperty> GetProperties()
         {
             foreach(var handle in _typeDefinition.GetProperties())
@@ -330,6 +336,10 @@ namespace ILDasmLibrary
                 var eventDef = _readers.MdReader.GetEventDefinition(handle);
                 yield return ILEventDefinition.Create(eventDef, MetadataTokens.GetToken(handle), ref _readers, this);
             }
+        }
+        private string GetSignature()
+        {
+            return string.Empty;
         }
 
         #endregion

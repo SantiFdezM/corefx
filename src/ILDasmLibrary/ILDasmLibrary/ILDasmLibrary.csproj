@@ -55,6 +55,7 @@
     <Compile Include="ILEventDefinition.cs" />
     <Compile Include="ILExceptionRegion.cs" />
     <Compile Include="ILField.cs" />
+    <Compile Include="ILHeaderOptions.cs" />
     <Compile Include="ILModuleDefinition.cs" />
     <Compile Include="ILParameter.cs" />
     <Compile Include="ILProperty.cs" />

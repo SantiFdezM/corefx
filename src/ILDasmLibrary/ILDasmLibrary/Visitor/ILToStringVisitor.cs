@@ -67,53 +67,9 @@ namespace ILDasmLibrary.Visitor
 
             foreach (var type in assembly.TypeDefinitions)
             {
+                if (type.Token == 33554433) continue; //skipping <Module> type definition for emitting correct IL.
                 type.Accept(this);
             }
-        }
-
-        private void WriteAssemblyDefinition(ILAssembly assembly)
-        {
-            WriteIndentation();
-            _writer.Write(".assembly ");
-            _writer.Write(assembly.Flags);
-            _writer.WriteLine(assembly.Name);
-            WriteIndentation();
-            _writer.WriteLine("{");
-            Indent();
-
-            foreach(var attribute in assembly.CustomAttributes)
-            {
-                attribute.Accept(this);
-            }
-            _writer.WriteLine();
-            _writer.WriteLine();
-
-            WriteIndentation();
-            _writer.Write(".hash algorithm ");
-            _writer.WriteLine(assembly.GetFormattedHashAlgorithm());
-
-            if (assembly.HasPublicKey)
-            {
-                WriteIndentation();
-                _writer.Write(".publickey = ");
-                _writer.WriteLine(assembly.GetPublicKeyString());
-            }
-
-            if (assembly.HasCulture)
-            {
-                WriteIndentation();
-                _writer.Write(".locale ");
-                _writer.WriteLine("'{0}'", assembly.Culture);
-            }
-
-            WriteIndentation();
-            _writer.WriteLine(string.Format(".ver {0}", assembly.GetFormattedVersion()));
-            Unindent();
-            WriteIndentation();
-            _writer.WriteLine("}");
-            WriteIndentation();
-            _writer.Write(".module ");
-            _writer.WriteLine(assembly.ModuleDefinition.Name);
         }
 
         public void Visit(ILAssemblyReference assemblyReference)
@@ -164,8 +120,13 @@ namespace ILDasmLibrary.Visitor
             WriteIndentation();
             _writer.Write(".class ");
             if (_options.ShowBytes)
-                _writer.Write("/* {0} */", typeDefinition.Token.ToString("X8"));
-            _writer.Write(typeDefinition.Name);
+                _writer.Write("/* {0} */ ", typeDefinition.Token.ToString("X8"));
+            _writer.Write(typeDefinition.FullName);
+            if (typeDefinition.HasBaseType)
+            {
+                _writer.Write(" extends ");
+                _writer.Write(typeDefinition.BaseType);
+            }
             _writer.WriteLine();
             WriteIndentation();
             _writer.WriteLine("{");
@@ -178,6 +139,11 @@ namespace ILDasmLibrary.Visitor
             foreach (var attribute in typeDefinition.CustomAttributes)
             {
                 attribute.Accept(this);
+            }
+
+            foreach(var field in typeDefinition.FieldDefinitions)
+            {
+                field.Accept(this);
             }
 
             foreach (var method in typeDefinition.MethodDefinitions)
@@ -217,6 +183,17 @@ namespace ILDasmLibrary.Visitor
             _writer.Write("} ");
             _writer.WriteLine(string.Format("// end of method {0}", methodDefinition.Name));
             _writer.WriteLine();
+        }
+
+        public void Visit(ILField field)
+        {
+            WriteIndentation();
+            _writer.Write(".field ");
+            if (_options.ShowBytes)
+            {
+                _writer.Write(string.Format("/* {0} */ ", field.Token.ToString("X8")));
+            }
+            _writer.WriteLine(field.Signature);
         }
 
         public void Visit(ILLocal local)
@@ -473,6 +450,61 @@ namespace ILDasmLibrary.Visitor
             }
             _writer.Write(string.Format("{0,-11}", instruction.opCode));
             _writer.WriteLine(string.Format("IL_{0:x4}", (instruction.Token + instruction.Value + instruction.Size)));
+        }
+
+        private void WriteAssemblyDefinition(ILAssembly assembly)
+        {
+            WriteIndentation();
+            _writer.Write(".assembly ");
+            _writer.Write(assembly.Flags);
+            _writer.WriteLine(assembly.Name);
+            WriteIndentation();
+            _writer.WriteLine("{");
+            Indent();
+
+            foreach (var attribute in assembly.CustomAttributes)
+            {
+                attribute.Accept(this);
+            }
+            _writer.WriteLine();
+            _writer.WriteLine();
+
+            WriteIndentation();
+            _writer.Write(".hash algorithm ");
+            _writer.WriteLine(assembly.GetFormattedHashAlgorithm());
+
+            if (assembly.HasPublicKey)
+            {
+                WriteIndentation();
+                _writer.Write(".publickey = ");
+                _writer.WriteLine(assembly.GetPublicKeyString());
+            }
+
+            if (assembly.HasCulture)
+            {
+                WriteIndentation();
+                _writer.Write(".locale ");
+                _writer.WriteLine("'{0}'", assembly.Culture);
+            }
+
+            WriteIndentation();
+            _writer.WriteLine(string.Format(".ver {0}", assembly.GetFormattedVersion()));
+            Unindent();
+            WriteIndentation();
+            _writer.WriteLine("}");
+            WriteIndentation();
+            _writer.Write(".module ");
+            _writer.WriteLine(assembly.ModuleDefinition.Name);
+            WriteIndentation();
+            _writer.WriteLine(string.Format(".imagebase 0x{0}", assembly.HeaderOptions.ImageBase.ToString("X8")));
+            WriteIndentation();
+            _writer.WriteLine(string.Format(".file alignment 0x{0}", assembly.HeaderOptions.FileAlignment.ToString("X8")));
+            WriteIndentation();
+            _writer.WriteLine(string.Format(".stackreserve 0x{0}", assembly.HeaderOptions.StackReserve.ToString("X8")));
+            WriteIndentation();
+            _writer.WriteLine(string.Format(".subsystem 0x{0}", assembly.HeaderOptions.SubSystem.ToString("X")));
+            WriteIndentation();
+            _writer.WriteLine(string.Format(".corflags 0x{0}", assembly.HeaderOptions.Corflags.ToString("X")));
         }
 
         private void WriteMethodDefinition(ILMethodDefinition methodDefinition)

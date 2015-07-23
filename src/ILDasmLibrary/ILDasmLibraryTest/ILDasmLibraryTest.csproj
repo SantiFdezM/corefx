@@ -67,6 +67,9 @@
     <None Include="Output\foo.il" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Assemblies\Demo1.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Assemblies\mscorlib.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

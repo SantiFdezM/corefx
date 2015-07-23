@@ -27,6 +27,8 @@ namespace ILDasmLibrary
         private IEnumerable<ILAssemblyReference> _assemblyReferences;
         private IEnumerable<ILCustomAttribute> _customAttribues;
         private ILModuleDefinition _moduleDefinition;
+        private ILHeaderOptions _headerOptions;
+        private bool _isHeaderInitialized;
         private bool _isModuleInitialized;
 
         #region Public APIs
@@ -38,14 +40,8 @@ namespace ILDasmLibrary
             assembly._readers = readers;
             assembly._hashAlgorithm = -1;
             assembly._assemblyDefinition = readers.MdReader.GetAssemblyDefinition();
-            assembly._publicKey = null;
-            assembly._typeDefinitions = null;
-            assembly._name = null;
-            assembly._culture = null;
-            assembly._version = null;
-            assembly._assemblyReferences = null;
-            assembly._customAttribues = null;
             assembly._isModuleInitialized = false;
+            assembly._isHeaderInitialized = false;
             return assembly;
         }
 
@@ -126,6 +122,19 @@ namespace ILDasmLibrary
                     _moduleDefinition = ILModuleDefinition.Create(_readers.MdReader.GetModuleDefinition(), ref _readers);
                 }
                 return _moduleDefinition;
+            }
+        }
+
+        public ILHeaderOptions HeaderOptions
+        {
+            get
+            {
+                if (!_isHeaderInitialized)
+                {
+                    _isHeaderInitialized = true;
+                    _headerOptions = ILHeaderOptions.Create(ref _readers);
+                }
+                return _headerOptions;
             }
         }
 
@@ -286,7 +295,7 @@ namespace ILDasmLibrary
                 }
                 var typeDefinition = _readers.MdReader.GetTypeDefinition(handle);
                 if(typeDefinition.GetDeclaringType().IsNil)
-                    yield return new ILTypeDefinition(typeDefinition, ref _readers, MetadataTokens.GetToken(handle));
+                    yield return ILTypeDefinition.Create(typeDefinition, ref _readers, MetadataTokens.GetToken(handle));
             }
         }
 

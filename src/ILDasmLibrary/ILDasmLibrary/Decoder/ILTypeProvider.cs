@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Decoding;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
 namespace ILDasmLibrary.Decoder
@@ -13,6 +14,8 @@ namespace ILDasmLibrary.Decoder
     public struct ILTypeProvider : ISignatureTypeProvider<ILType>
     {
         private readonly MetadataReader _reader;
+        private bool _isClass;
+        private bool _isValueType;
 
         public MetadataReader Reader
         {
@@ -25,6 +28,8 @@ namespace ILDasmLibrary.Decoder
         public ILTypeProvider(MetadataReader reader)
         {
             _reader = reader;
+            _isClass = false;
+            _isValueType = false;
         }
 
         #region Public APIs
@@ -203,9 +208,10 @@ namespace ILDasmLibrary.Decoder
 
         public ILType GetTypeFromDefinition(TypeDefinitionHandle handle)
         {
-            bool isClass = true; // adding class prefix to all type definitions.
-            bool isValueType = false;
-            return new ILType(GetFullName(Reader.GetTypeDefinition(handle)),isValueType, isClass);
+            ILType type = new ILType(GetFullName(Reader.GetTypeDefinition(handle)),_isValueType, _isClass);
+            _isValueType = false;
+            _isClass = false;
+            return type;
         }
 
         public ILType GetTypeFromReference(TypeReferenceHandle handle)
@@ -287,6 +293,36 @@ namespace ILDasmLibrary.Decoder
 
         private string GetName(TypeDefinition type)
         {
+            EntityHandle declaringType = type.BaseType;
+            string declaringName = string.Empty;
+            if (!declaringType.IsNil)
+            {
+                if(declaringType.Kind == HandleKind.TypeDefinition)
+                {
+                    declaringName = GetName(_reader.GetTypeDefinition((TypeDefinitionHandle)declaringType));
+                }
+                else if(declaringType.Kind == HandleKind.TypeReference)
+                {
+                    declaringName = GetName(_reader.GetTypeReference((TypeReferenceHandle)declaringType));
+                }
+
+                if(declaringName == "System.ValueType")
+                {
+                    _isValueType = true;
+                    _isClass = false; //System.ValueType inherits from System.Object and since it is recursive we have to set his to false.
+                }
+
+                if(declaringName == "System.Object" && !_isValueType)
+                {
+                    _isClass = true;
+                }
+            }
+
+            else //interfaces indirectly inherit from System.Object
+            {
+                _isClass = true;
+            }
+
             if (type.Namespace.IsNil)
             {
                 return Reader.GetString(type.Name);

@@ -80,7 +80,7 @@ namespace ILDasmLibrary
             }
         }
 
-        //Moving to ILEntity when ILTypeReference implemented.
+        //TODO: Moving to ILEntity when ILTypeReference implemented.
         public string Type
         {
             get
@@ -93,7 +93,7 @@ namespace ILDasmLibrary
                 //}
                 if(_type == null)
                 {
-                    _type = ILDecoder.DecodeType(_eventDefinition.Type, _readers.Provider);
+                    _type = ILDecoder.DecodeType(_eventDefinition.Type, _readers.Provider).ToString();
                 }
                 return _type;
             }
@@ -180,7 +180,7 @@ namespace ILDasmLibrary
             {
                 TypeDefinition definition = _readers.MdReader.GetTypeDefinition((TypeDefinitionHandle)handle);
                 int token = MetadataTokens.GetToken(handle);
-                ILTypeDefinition type = new ILTypeDefinition(definition, ref _readers, token);
+                ILTypeDefinition type = ILTypeDefinition.Create(definition, ref _readers, token);
                 return new ILEntity(type, EntityKind.TypeDefinition);
             }
             return new ILEntity();
