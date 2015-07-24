@@ -18,7 +18,7 @@ namespace ILDasmLibrary
         private ILMethodDefinition _remover;
         private ILMethodDefinition _raiser;
         private int _token;
-        private string _type;
+        private ILEntity _type;
         private bool _isAdderInitialized;
         private bool _isRemoverInitialized;
         private bool _isRaiserInitialized;
@@ -80,20 +80,14 @@ namespace ILDasmLibrary
             }
         }
 
-        //TODO: Moving to ILEntity when ILTypeReference implemented.
-        public string Type
+        public ILEntity Type
         {
             get
             {
-                // When Using ILEntity.
-                //if(!_isEntityInitialized)
-                //{
-                //    _isEntityInitialized = true;
-                //    _type = GetEntity();
-                //}
-                if(_type == null)
+                if (!_isEntityInitialized)
                 {
-                    _type = ILDecoder.DecodeType(_eventDefinition.Type, _readers.Provider).ToString();
+                    _isEntityInitialized = true;
+                    _type = GetEntity();
                 }
                 return _type;
             }
@@ -176,14 +170,7 @@ namespace ILDasmLibrary
         private ILEntity GetEntity()
         {
             var handle = _eventDefinition.Type;
-            if(handle.Kind == HandleKind.TypeDefinition)
-            {
-                TypeDefinition definition = _readers.MdReader.GetTypeDefinition((TypeDefinitionHandle)handle);
-                int token = MetadataTokens.GetToken(handle);
-                ILTypeDefinition type = ILTypeDefinition.Create(definition, ref _readers, token);
-                return new ILEntity(type, EntityKind.TypeDefinition);
-            }
-            return new ILEntity();
+            return ILDecoder.DecodeEntityHandle(handle, ref _readers);
         }
     }
 }

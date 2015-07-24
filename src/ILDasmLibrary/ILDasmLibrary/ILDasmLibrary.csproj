@@ -59,6 +59,9 @@
     <Compile Include="ILModuleDefinition.cs" />
     <Compile Include="ILParameter.cs" />
     <Compile Include="ILProperty.cs" />
+    <Compile Include="ILTypeLayout.cs" />
+    <Compile Include="ILTypeReference.cs" />
+    <Compile Include="ILTypeSpecification.cs" />
     <Compile Include="Instructions\ILVariableInstruction.cs" />
     <Compile Include="ILMethodDefinition.cs" />
     <Compile Include="ILTypeDefinition.cs" />

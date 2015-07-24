@@ -17,6 +17,7 @@ namespace ILDasmLibrary
     {
         private Readers _readers;
         private TypeDefinition _typeDefinition;
+        private ILTypeLayout _layout;
         private string _name;
         private string _fullName;
         private string _namespace;
@@ -29,7 +30,9 @@ namespace ILDasmLibrary
         private IEnumerable<ILCustomAttribute> _customAttributes;
         private IEnumerable<ILProperty> _properties;
         private IEnumerable<ILEventDefinition> _events;
-        private string _baseType;
+        private ILEntity _baseType;
+        private bool _isBaseTypeInitialized;
+        private bool _isLayoutInitialized;
         private string _signature;
 
         internal static ILTypeDefinition Create(TypeDefinition typeDef, ref Readers readers, int token)
@@ -38,6 +41,8 @@ namespace ILDasmLibrary
             type._typeDefinition = typeDef;
             type._token = token;
             type._readers = readers;
+            type._isBaseTypeInitialized = false;
+            type._isLayoutInitialized = false;
             return type;
         }
 
@@ -124,15 +129,15 @@ namespace ILDasmLibrary
             }
         }
 
-        public string BaseType
+        public ILEntity BaseType
         {
             get
             {
-                if (IsInterface) return null;
-                if(_baseType == null)
+                if (IsInterface) throw new InvalidOperationException("The type definition is an interface, they don't have a base type");
+                if(!_isBaseTypeInitialized)
                 {
-                    //To do this Entity (typedef or typeref).
-                    _baseType = SignatureDecoder.DecodeType(_typeDefinition.BaseType, _readers.Provider).ToString(false);
+                    _isBaseTypeInitialized = true;
+                    _baseType = ILDecoder.DecodeEntityHandle(_typeDefinition.BaseType, ref _readers);
                 }
                 return _baseType;
             }
@@ -143,6 +148,19 @@ namespace ILDasmLibrary
             get
             {
                 return _typeDefinition.Attributes;
+            }
+        }
+
+        public ILTypeLayout Layout
+        {
+            get
+            {
+                if (!_isLayoutInitialized)
+                {
+                    _isLayoutInitialized = true;
+                    _layout = new ILTypeLayout(_typeDefinition.GetLayout());
+                }
+                return _layout;
             }
         }
 

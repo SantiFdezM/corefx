@@ -149,6 +149,31 @@ namespace ILDasmLibrary.Decoder
             return sb.ToString();
         }
 
+        internal static ILEntity DecodeEntityHandle(EntityHandle handle, ref Readers _readers)
+        {
+            if (handle.Kind == HandleKind.TypeDefinition)
+            {
+                TypeDefinition definition = _readers.MdReader.GetTypeDefinition((TypeDefinitionHandle)handle);
+                int token = MetadataTokens.GetToken(handle);
+                ILTypeDefinition type = ILTypeDefinition.Create(definition, ref _readers, token);
+                return new ILEntity(type, EntityKind.TypeDefinition);
+            }
+            if (handle.Kind == HandleKind.TypeSpecification)
+            {
+                TypeSpecification specification = _readers.MdReader.GetTypeSpecification((TypeSpecificationHandle)handle);
+                ILTypeSpecification type = ILTypeSpecification.Create(specification, ref _readers);
+                return new ILEntity(type, EntityKind.TypeSpecification);
+            }
+            if (handle.Kind == HandleKind.TypeReference)
+            {
+                TypeReference reference = _readers.MdReader.GetTypeReference((TypeReferenceHandle)handle);
+                int token = MetadataTokens.GetToken(handle);
+                ILTypeReference type = ILTypeReference.Create(reference, ref _readers, token);
+                return new ILEntity(type, EntityKind.TypeReference);
+            }
+            throw new BadImageFormatException("Event definition type must be either type reference, type definition or type specification");
+        }
+
         public static MethodSignature<ILType> DecodeMethodSignature(MethodDefinition _methodDefinition, ILTypeProvider _provider)
         {
             return SignatureDecoder.DecodeMethodSignature(_methodDefinition.Signature, _provider);

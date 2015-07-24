@@ -9,7 +9,8 @@ namespace ILDasmLibrary
     public enum EntityKind
     {
         TypeReference,
-        TypeDefinition
+        TypeDefinition,
+        TypeSpecification
     }
 
     public struct ILEntity

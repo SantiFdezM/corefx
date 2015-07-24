@@ -121,24 +121,39 @@ namespace ILDasmLibrary.Visitor
             _writer.Write(".class ");
             if (_options.ShowBytes)
                 _writer.Write("/* {0} */ ", typeDefinition.Token.ToString("X8"));
-            _writer.Write(typeDefinition.FullName);
+            if (typeDefinition.IsNested)
+            {
+                _writer.Write(typeDefinition.Name);
+            }
+            else
+            {
+                _writer.Write(typeDefinition.FullName);
+            }
             if (typeDefinition.HasBaseType)
             {
                 _writer.Write(" extends ");
-                _writer.Write(typeDefinition.BaseType);
+                WriteEntityType(typeDefinition.BaseType);
             }
             _writer.WriteLine();
             WriteIndentation();
             _writer.WriteLine("{");
             Indent();
-            foreach (var nestedType in typeDefinition.NestedTypes)
+            if (!typeDefinition.Layout.IsDefault)
             {
-                nestedType.Accept(this);
+                WriteIndentation();
+                _writer.WriteLine(string.Format(".pack {0}", typeDefinition.Layout.PackingSize));
+                WriteIndentation();
+                _writer.WriteLine(string.Format(".size {0}", typeDefinition.Layout.Size));
             }
 
             foreach (var attribute in typeDefinition.CustomAttributes)
             {
                 attribute.Accept(this);
+            }
+
+            foreach (var nestedType in typeDefinition.NestedTypes)
+            {
+                nestedType.Accept(this);
             }
 
             foreach(var field in typeDefinition.FieldDefinitions)
@@ -226,7 +241,8 @@ namespace ILDasmLibrary.Visitor
             {
                 _writer.Write(string.Format("/* {0} */ ", eventDef.Token.ToString("X8")));
             }
-            _writer.Write(eventDef.Type);
+
+            WriteEntityType(eventDef.Type);
             _writer.Write(" ");
             _writer.WriteLine(eventDef.Name);
             WriteIndentation();
@@ -718,6 +734,22 @@ namespace ILDasmLibrary.Visitor
             if (_options.ShowBytes)
                 _writer.Write("/* {0} */ ", property.Token.ToString("X8"));
             _writer.WriteLine(property.GetDecodedSignature());
+        }
+
+        private void WriteEntityType(ILEntity type)
+        {
+            if (type.Kind == EntityKind.TypeDefinition)
+            {
+                _writer.Write(((ILTypeDefinition)type.Entity).FullName);
+            }
+            else if (type.Kind == EntityKind.TypeReference)
+            {
+                _writer.Write(((ILTypeReference)type.Entity).FullName);
+            }
+            else
+            {
+                _writer.Write(((ILTypeSpecification)type.Entity).Signature);
+            }
         }
 
         private static bool EndFilterRegion(IReadOnlyList<ILExceptionRegion> exceptionRegions, int lastRegionIndex, int ilOffset)
