@@ -54,6 +54,11 @@ namespace ILDasmLibrary.Visitor
             _writer.WriteLine();
             _writer.WriteLine();
 
+            foreach(var moduleRef in assembly.ModuleReferences)
+            {
+                moduleRef.Accept(this);
+            }
+
             foreach (var assemblyRef in assembly.AssemblyReferences)
             {
                 assemblyRef.Accept(this);
@@ -113,6 +118,19 @@ namespace ILDasmLibrary.Visitor
             Unindent();
             WriteIndentation();
             _writer.WriteLine("}");
+        }
+
+        public void Visit(ILModuleReference moduleReference)
+        {
+            WriteIndentation();
+            _writer.Write(".module extern");
+            _writer.Write(" ");
+            _writer.Write(moduleReference.Name);
+            if (_options.ShowBytes)
+            {
+                _writer.Write(string.Format(" /* {0} */", moduleReference.Token));
+            }
+            _writer.WriteLine();
         }
 
         public void Visit(ILTypeDefinition typeDefinition)
@@ -255,30 +273,6 @@ namespace ILDasmLibrary.Visitor
             _writer.WriteLine();
         }
 
-        private void WriteEventBody(ILEventDefinition eventDef)
-        {
-            if (eventDef.HasAdder)
-            {
-                WriteIndentation();
-                _writer.Write(".addon ");
-                WritePropertyOrEventAccessor(eventDef.Adder);
-            }
-
-            if (eventDef.HasRemover)
-            {
-                WriteIndentation();
-                _writer.Write(".removeon ");
-                WritePropertyOrEventAccessor(eventDef.Remover);
-            }
-
-            if (eventDef.HasRaiser)
-            {
-                WriteIndentation();
-                _writer.Write(".fire ");
-                WritePropertyOrEventAccessor(eventDef.Raiser);
-            }
-        }
-
         public void Visit(ILSingleInstruction instruction)
         {
             if (_options.ShowBytes)
@@ -292,6 +286,18 @@ namespace ILDasmLibrary.Visitor
                 _writer.Write("(");
                 _writer.Write(BitConverter.ToString(data).Replace("-", " "));
                 _writer.WriteLine(")");
+                return;
+            }
+
+            if(instruction.Value == 0.0)
+            {
+                var bytes = BitConverter.GetBytes(instruction.Value);
+                if(bytes[bytes.Length-1] == 128)
+                {
+                    _writer.WriteLine("-0.0");
+                    return;
+                }
+                _writer.WriteLine("0.0");
                 return;
             }
             _writer.Write(instruction.Value.ToString());
@@ -327,7 +333,8 @@ namespace ILDasmLibrary.Visitor
             if (_options.ShowBytes)
             {
                 int tok = instruction.Token;
-                string tokenValue = string.Format("({0}){1}", (tok >> 24).ToString("X2"), ((tok << 8) >> 8).ToString("X6"));
+                uint RIDMask = (1 << 24) - 1;
+                string tokenValue = string.Format("({0}){1}", (tok >> 24).ToString("X2"), (tok & RIDMask).ToString("X6"));
                 WriteBytes(tokenValue, instruction);
             }
             _writer.Write(string.Format("{0,-13}", instruction.opCode));
@@ -440,6 +447,19 @@ namespace ILDasmLibrary.Visitor
                 _writer.WriteLine(")");
                 return;
             }
+
+            if (instruction.Value == 0.0)
+            {
+                var bytes = BitConverter.GetBytes(instruction.Value);
+                if (bytes[bytes.Length - 1] == 128)
+                {
+                    _writer.WriteLine("-0.0");
+                    return;
+                }
+                _writer.WriteLine("0.0");
+                return;
+            }
+
             _writer.Write(instruction.Value.ToString());
             if (instruction.Value % 10 == 0)
             {
@@ -521,6 +541,29 @@ namespace ILDasmLibrary.Visitor
             _writer.WriteLine(string.Format(".subsystem 0x{0}", assembly.HeaderOptions.SubSystem.ToString("X")));
             WriteIndentation();
             _writer.WriteLine(string.Format(".corflags 0x{0}", assembly.HeaderOptions.Corflags.ToString("X")));
+        }
+        private void WriteEventBody(ILEventDefinition eventDef)
+        {
+            if (eventDef.HasAdder)
+            {
+                WriteIndentation();
+                _writer.Write(".addon ");
+                WritePropertyOrEventAccessor(eventDef.Adder);
+            }
+
+            if (eventDef.HasRemover)
+            {
+                WriteIndentation();
+                _writer.Write(".removeon ");
+                WritePropertyOrEventAccessor(eventDef.Remover);
+            }
+
+            if (eventDef.HasRaiser)
+            {
+                WriteIndentation();
+                _writer.Write(".fire ");
+                WritePropertyOrEventAccessor(eventDef.Raiser);
+            }
         }
 
         private void WriteMethodDefinition(ILMethodDefinition methodDefinition)

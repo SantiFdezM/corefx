@@ -14,8 +14,18 @@ namespace ILDasmLibrary.Decoder
     public struct ILTypeProvider : ISignatureTypeProvider<ILType>
     {
         private readonly MetadataReader _reader;
-        private bool _isClass;
-        private bool _isValueType;
+        
+#if PREFIX
+        public SignatureTypeCode TypeCode { get; set; }
+
+        public bool NeedProjectedFlags
+        {
+            get
+            {
+                return true;
+            }
+        }
+#endif
 
         public MetadataReader Reader
         {
@@ -28,11 +38,10 @@ namespace ILDasmLibrary.Decoder
         public ILTypeProvider(MetadataReader reader)
         {
             _reader = reader;
-            _isClass = false;
-            _isValueType = false;
+            TypeCode = SignatureTypeCode.Invalid;
         }
 
-        #region Public APIs
+#region Public APIs
 
         public ILType GetArrayType(ILType elementType, ArrayShape shape)
         {
@@ -208,17 +217,22 @@ namespace ILDasmLibrary.Decoder
 
         public ILType GetTypeFromDefinition(TypeDefinitionHandle handle)
         {
-            ILType type = new ILType(GetFullName(Reader.GetTypeDefinition(handle)),_isValueType, _isClass);
-            _isValueType = false;
-            _isClass = false;
-            return type;
+            bool isValueType = TypeCode == SignatureTypeCode.ValueType;
+            bool isClass = TypeCode == SignatureTypeCode.Class;
+            TypeCode = SignatureTypeCode.Invalid;
+            return new ILType(GetFullName(Reader.GetTypeDefinition(handle)),isValueType, isClass);
         }
 
         public ILType GetTypeFromReference(TypeReferenceHandle handle)
         {
             bool isClass = true; // adding class prefix to all type references.
             bool isValueType = false;
-            return new ILType(GetFullName(Reader.GetTypeReference(handle)),isValueType, isClass);
+#if PREFIX
+            isValueType = TypeCode == SignatureTypeCode.ValueType;
+            isClass = TypeCode == SignatureTypeCode.Class;
+            TypeCode = SignatureTypeCode.Invalid;
+#endif
+            return new ILType(GetFullName(Reader.GetTypeReference(handle)), isValueType, isClass);
         }
 
         public string GetParameterList(MethodSignature<ILType> signature, ParameterHandleCollection? parameters = null)
@@ -260,9 +274,9 @@ namespace ILDasmLibrary.Decoder
             return sb.ToString();
         }
 
-        #endregion
+#endregion
 
-        #region Private helper methods
+#region Private helper methods
 
         internal string[] GetParameterNames(ParameterHandleCollection? parameters, int requiredCount)
         {
@@ -293,6 +307,13 @@ namespace ILDasmLibrary.Decoder
 
         private string GetName(TypeDefinition type)
         {
+#if PREFIX
+            if (type.Namespace.IsNil)
+            {
+                return Reader.GetString(type.Name);
+            }
+            return String.Format("{0}.{1}", Reader.GetString(type.Namespace), Reader.GetString(type.Name));
+#else
             EntityHandle declaringType = type.BaseType;
             string declaringName = string.Empty;
             if (!declaringType.IsNil)
@@ -308,19 +329,18 @@ namespace ILDasmLibrary.Decoder
 
                 if(declaringName == "System.ValueType")
                 {
-                    _isValueType = true;
-                    _isClass = false; //System.ValueType inherits from System.Object and since it is recursive we have to set his to false.
+                    TypeCode = SignatureTypeCode.ValueType;
                 }
 
-                if(declaringName == "System.Object" && !_isValueType)
+                if(declaringName == "System.Object")
                 {
-                    _isClass = true;
+                    TypeCode = SignatureTypeCode.Class;
                 }
             }
 
             else //interfaces indirectly inherit from System.Object
             {
-                _isClass = true;
+                TypeCode = SignatureTypeCode.Class;
             }
 
             if (type.Namespace.IsNil)
@@ -328,6 +348,7 @@ namespace ILDasmLibrary.Decoder
                 return Reader.GetString(type.Name);
             }
             return String.Format("{0}.{1}", Reader.GetString(type.Namespace), Reader.GetString(type.Name));
+#endif
         }
 
         private string GetFullName(TypeDefinitionHandle handle)
@@ -370,6 +391,6 @@ namespace ILDasmLibrary.Decoder
             }
         }
 
-        #endregion
+#endregion
     }
 }

@@ -59,10 +59,26 @@ namespace ILDasmLibrary.Decoder
             _name.Append(str);
         }
 
+#if PREFIX
         /// <summary>
         /// Method that returns the type name.
         /// </summary>
         /// <returns>string representing the type name</returns>
+        public override string ToString()
+        {
+            return string.Format("{0}{1}", (IsValueType ? "valuetype " : (IsClassType ? "class " : string.Empty)), Name);
+        }
+
+        /// <summary>
+        /// Method that returns the type name with the option to show "class" or "valutype" prefix depending on it's inheritance.
+        /// </summary>
+        /// <param name="showBaseType">boolean that represents if you want the prefix to be shown.</param>
+        /// <returns>string that represents the type.</returns>
+        public string ToString(bool showBaseType)
+        {
+            return ToString();
+        }
+#else
         public override string ToString()
         {
             return ToString(true);
@@ -75,20 +91,12 @@ namespace ILDasmLibrary.Decoder
         /// <returns>string that represents the type.</returns>
         public string ToString(bool showBaseType)
         {
-            //string baseType = string.Empty;
-            //if (IsValueType)
-            //{
-            //    baseType = "valuetype ";
-            //}
-            //if (IsClassType)
-            //{
-            //    baseType = "class ";
-            //}
             if (showBaseType)
             {
                 return string.Format("{0}{1}", (IsValueType ? "valuetype " : (IsClassType ? "class " : string.Empty)), Name);
             }
             return string.Format("{0}", Name);
         }
+#endif
     }
 }

@@ -11,6 +11,7 @@ namespace ILDasmLibrary.Visitor
     {
         void Visit(ILAssembly assembly);
         void Visit(ILAssemblyReference assemblyReference);
+        void Visit(ILModuleReference moduleReference);
         void Visit(ILTypeDefinition typeDefinition);
         void Visit(ILMethodDefinition methodDefinition);
         void Visit(ILField field);

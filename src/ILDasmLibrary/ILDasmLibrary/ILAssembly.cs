@@ -25,7 +25,9 @@ namespace ILDasmLibrary
         private int _hashAlgorithm;
         private Version _version;
         private IEnumerable<ILAssemblyReference> _assemblyReferences;
+        private IEnumerable<ILTypeReference> _typeReferences;
         private IEnumerable<ILCustomAttribute> _customAttribues;
+        private IEnumerable<ILModuleReference> _moduleReferences;
         private ILModuleDefinition _moduleDefinition;
         private ILHeaderOptions _headerOptions;
         private bool _isHeaderInitialized;
@@ -210,9 +212,21 @@ namespace ILDasmLibrary
             {
                 if (_typeDefinitions == null)
                 {
-                    _typeDefinitions = PopulateTypeDefinitions();
+                    _typeDefinitions = GetTypeDefinitions();
                 }
                 return _typeDefinitions.AsEnumerable<ILTypeDefinition>();
+            }
+        }
+
+        public IEnumerable<ILTypeReference> TypeReferences
+        {
+            get
+            {
+                if(_typeReferences == null)
+                {
+                    _typeReferences = GetTypeReferences();
+                }
+                return _typeReferences;
             }
         }
 
@@ -225,6 +239,18 @@ namespace ILDasmLibrary
                     _assemblyReferences = GetAssemblyReferences();
                 }
                 return _assemblyReferences;
+            }
+        }
+
+        public IEnumerable<ILModuleReference> ModuleReferences
+        {
+            get
+            {
+                if(_moduleReferences == null)
+                {
+                    _moduleReferences = GetModuleReferences();
+                }
+                return _moduleReferences;
             }
         }
 
@@ -284,7 +310,7 @@ namespace ILDasmLibrary
 
         #region Private Methods
 
-        private IEnumerable<ILTypeDefinition> PopulateTypeDefinitions()
+        private IEnumerable<ILTypeDefinition> GetTypeDefinitions()
         {
             var handles = _readers.MdReader.TypeDefinitions;
             foreach(var handle in handles)
@@ -296,6 +322,16 @@ namespace ILDasmLibrary
                 var typeDefinition = _readers.MdReader.GetTypeDefinition(handle);
                 if(typeDefinition.GetDeclaringType().IsNil)
                     yield return ILTypeDefinition.Create(typeDefinition, ref _readers, MetadataTokens.GetToken(handle));
+            }
+        }
+
+        private IEnumerable<ILTypeReference> GetTypeReferences()
+        {
+            var handles = _readers.MdReader.TypeReferences;
+            foreach(var handle in handles)
+            {
+                var typeReference = _readers.MdReader.GetTypeReference(handle);
+                yield return ILTypeReference.Create(typeReference, ref _readers, MetadataTokens.GetToken(handle));
             }
         }
 
@@ -315,6 +351,17 @@ namespace ILDasmLibrary
             {
                 var attribute = _readers.MdReader.GetCustomAttribute(handle);
                 yield return new ILCustomAttribute(attribute, ref _readers);
+            }
+        }
+
+        private IEnumerable<ILModuleReference> GetModuleReferences()
+        {
+            for(int rid = 1, rowCount = _readers.MdReader.GetTableRowCount(TableIndex.ModuleRef); rid <= rowCount; rid++)
+            {
+                var handle = MetadataTokens.ModuleReferenceHandle(rid);
+                var moduleReference = _readers.MdReader.GetModuleReference(handle);
+                int token = MetadataTokens.GetToken(handle);
+                yield return ILModuleReference.Create(moduleReference, ref _readers, token);
             }
         }
 

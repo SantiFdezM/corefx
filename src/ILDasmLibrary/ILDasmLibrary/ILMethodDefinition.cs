@@ -20,6 +20,7 @@ namespace ILDasmLibrary
         private MethodDefinition _methodDefinition;
         private ILTypeProvider _provider;
         private MethodBodyBlock _methodBody;
+        private ILMethodImport _import;
         private string _name;
         private int _rva;
         private MethodSignature<ILType> _signature;
@@ -34,6 +35,7 @@ namespace ILDasmLibrary
         private int _methodDeclarationToken;
         private bool _isIlReaderInitialized;
         private bool _isSignatureInitialized;
+        private bool _isImportInitialized;
         private IReadOnlyList<ILExceptionRegion> _exceptionRegions;
 
         internal static ILMethodDefinition Create(MethodDefinition methodDefinition, int token, ref Readers readers, ILTypeDefinition typeDefinition)
@@ -48,6 +50,7 @@ namespace ILDasmLibrary
             method._methodDeclarationToken = -1;
             method._isIlReaderInitialized = false;
             method._isSignatureInitialized = false;
+            method._isImportInitialized = false;
             if(method.RelativeVirtualAddress != 0)
                 method._methodBody = method._readers.PEReader.GetMethodBody(method.RelativeVirtualAddress);
             return method;
@@ -180,6 +183,19 @@ namespace ILDasmLibrary
                     _signature = ILDecoder.DecodeMethodSignature(_methodDefinition, _provider);
                 }
                 return _signature;
+            }
+        }
+
+        public ILMethodImport Import
+        {
+            get
+            {
+                if (!_isImportInitialized)
+                {
+                    _isImportInitialized = true;
+                    _import = ILMethodImport.Create(_methodDefinition.GetImport(), ref _readers);
+                }
+                return _import;
             }
         }
 
@@ -507,7 +523,7 @@ namespace ILDasmLibrary
             }
             if (Attributes.HasFlag(MethodAttributes.PinvokeImpl))
             {
-                sb.Append("pinvokeimpl");
+                sb.Append("pinvokeimpl ");
             }
             return sb.ToString();
         }
