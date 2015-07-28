@@ -17,7 +17,7 @@
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = (01 00 08 00 00 00 00 00)
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = (01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78 63 65 70 74 69 6F 6E 54 68 72 6F 77 73 01)
-  .custom instance void [mscorlib]System.Diagnostics.DebuggableAttribute::.ctor(valuetype [mscorlib]System.Diagnostics.DebuggableAttribute/DebuggingModes) = (01 00 07 01 00 00 00 00)
+  .custom instance void [mscorlib]System.Diagnostics.DebuggableAttribute::.ctor(class [mscorlib]System.Diagnostics.DebuggableAttribute/DebuggingModes) = (01 00 07 01 00 00 00 00)
   .custom instance void [mscorlib]System.Reflection.AssemblyTitleAttribute::.ctor(string) = (01 00 05 44 65 6D 6F 31 00 00)
   .custom instance void [mscorlib]System.Reflection.AssemblyDescriptionAttribute::.ctor(string) = (01 00 00 00 00)
   .custom instance void [mscorlib]System.Reflection.AssemblyConfigurationAttribute::.ctor(string) = (01 00 00 00 00)
@@ -43,10 +43,10 @@
 
 // =============== CLASS MEMBERS DECLARATION ===================
 
-.class /* 02000002 */ private auto ansi beforefieldinit Demo1.Program extends [mscorlib]System.Object
+.class /* 02000002 */ Demo1.Program extends [mscorlib]System.Object
 {
   .field /* 04000001 */ public static string str
-  .field /* 04000002 */ public static valuetype [mscorlib]System.DateTime dt
+  .field /* 04000002 */ public static class [mscorlib]System.DateTime dt
   .field /* 04000003 */ public static valuetype Demo1.StructTest st
   .method /* 06000001 */ public hidebysig static specialname string get_Str() cil managed
   {
@@ -80,7 +80,7 @@
     IL_0017:  /* 0C   |                  */ stloc.2
     IL_0018:  /* 22   | BA493A41         */ ldc.r4     11.643
     IL_001d:  /* 0D   |                  */ stloc.3
-    IL_001e:  /* 7F   | (04)000002       */ ldsflda      valuetype [mscorlib]System.DateTime Demo1.Program::dt
+    IL_001e:  /* 7F   | (04)000002       */ ldsflda      class [mscorlib]System.DateTime Demo1.Program::dt
     IL_0023:  /* 28   | (0A)00000F       */ call         instance int32 [mscorlib]System.DateTime::get_Day()
     IL_0028:  /* 28   | (0A)000010       */ call         void [mscorlib]System.Console::WriteLine(int32)
     IL_002d:  /* 00   |                  */ nop
@@ -168,7 +168,7 @@
       } // end .try
       filter
       {
-        IL_001a:  /* 75   | (01)000013       */ isinst       [mscorlib]System.FormatException
+        IL_001a:  /* 75   | (01)000013       */ isinst       class [mscorlib]System.FormatException
         IL_001f:  /* 25   |                  */ dup
         IL_0020:  /* 2D   | 04               */ brtrue.s   IL_0026
         IL_0022:  /* 26   |                  */ pop
@@ -274,32 +274,32 @@
                  [1] class [mscorlib]System.Type V_1,
                  [2] class [System.Core]System.Linq.Expressions.ParameterExpression V_2)
     IL_0000:  /* 00   |                  */ nop
-    IL_0001:  /* D0   | (01)00001D       */ ldtoken      [mscorlib]System.Int32
-    IL_0006:  /* 28   | (0A)00001B       */ call         class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0001:  /* D0   | (01)00001D       */ ldtoken      class [mscorlib]System.Int32
+    IL_0006:  /* 28   | (0A)00001B       */ call         class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(class [mscorlib]System.RuntimeTypeHandle)
     IL_000b:  /* 72   | (70)000077       */ ldstr        "x"
     IL_0010:  /* 28   | (0A)00001C       */ call         class [System.Core]System.Linq.Expressions.ParameterExpression [System.Core]System.Linq.Expressions.Expression::Parameter(class [mscorlib]System.Type,string)
     IL_0015:  /* 0C   |                  */ stloc.2
     IL_0016:  /* 14   |                  */ ldnull
     IL_0017:  /* D0   | (06)000004       */ ldtoken      method int32 Demo1.Program::Switch(int32)
-    IL_001c:  /* 28   | (0A)00001D       */ call         class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0021:  /* 74   | (01)000028       */ castclass    [mscorlib]System.Reflection.MethodInfo
+    IL_001c:  /* 28   | (0A)00001D       */ call         class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(class [mscorlib]System.RuntimeMethodHandle)
+    IL_0021:  /* 74   | (01)000028       */ castclass    class [mscorlib]System.Reflection.MethodInfo
     IL_0026:  /* 17   |                  */ ldc.i4.1
-    IL_0027:  /* 8D   | (01)000025       */ newarr       [System.Core]System.Linq.Expressions.Expression
+    IL_0027:  /* 8D   | (01)000025       */ newarr       class [System.Core]System.Linq.Expressions.Expression
     IL_002c:  /* 25   |                  */ dup
     IL_002d:  /* 16   |                  */ ldc.i4.0
     IL_002e:  /* 08   |                  */ ldloc.2
     IL_002f:  /* A2   |                  */ stelem.ref
     IL_0030:  /* 28   | (0A)00001E       */ call         class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,class [mscorlib]System.Reflection.MethodInfo,class [System.Core]System.Linq.Expressions.Expression[])
     IL_0035:  /* 17   |                  */ ldc.i4.1
-    IL_0036:  /* 8D   | (01)000018       */ newarr       [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_0036:  /* 8D   | (01)000018       */ newarr       class [System.Core]System.Linq.Expressions.ParameterExpression
     IL_003b:  /* 25   |                  */ dup
     IL_003c:  /* 16   |                  */ ldc.i4.0
     IL_003d:  /* 08   |                  */ ldloc.2
     IL_003e:  /* A2   |                  */ stelem.ref
     IL_003f:  /* 28   | (2B)000001       */ call         class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`2<int32,int32>>(class [System.Core]System.Linq.Expressions.Expression,class [System.Core]System.Linq.Expressions.ParameterExpression[])
     IL_0044:  /* 0A   |                  */ stloc.0
-    IL_0045:  /* D0   | (01)00002A       */ ldtoken      [mscorlib]System.Reflection.Emit.OpCodes
-    IL_004a:  /* 28   | (0A)00001B       */ call         class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0045:  /* D0   | (01)00002A       */ ldtoken      class [mscorlib]System.Reflection.Emit.OpCodes
+    IL_004a:  /* 28   | (0A)00001B       */ call         class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(class [mscorlib]System.RuntimeTypeHandle)
     IL_004f:  /* 0B   |                  */ stloc.1
     IL_0050:  /* 2A   |                  */ ret
   } // end of method LoadToken
@@ -339,10 +339,10 @@
     .maxstack  8
     IL_0000:  /* 72   | (70)00007B       */ ldstr        "Hello"
     IL_0005:  /* 80   | (04)000001       */ stsfld       string Demo1.Program::str
-    IL_000a:  /* 7F   | (04)000002       */ ldsflda      valuetype [mscorlib]System.DateTime Demo1.Program::dt
-    IL_000f:  /* FE15 | (01)000011       */ initobj      [mscorlib]System.DateTime
+    IL_000a:  /* 7F   | (04)000002       */ ldsflda      class [mscorlib]System.DateTime Demo1.Program::dt
+    IL_000f:  /* FE15 | (01)000011       */ initobj      class [mscorlib]System.DateTime
     IL_0015:  /* 7F   | (04)000003       */ ldsflda      valuetype Demo1.StructTest Demo1.Program::st
-    IL_001a:  /* FE15 | (02)000003       */ initobj      Demo1.StructTest
+    IL_001a:  /* FE15 | (02)000003       */ initobj      valuetype Demo1.StructTest
     IL_0020:  /* 2A   |                  */ ret
   } // end of method .cctor
 
@@ -353,7 +353,7 @@
 
 } // end of class Demo1.Program
 
-.class /* 02000003 */ private sequential ansi sealed Demo1.StructTest extends [mscorlib]System.ValueType
+.class /* 02000003 */ Demo1.StructTest extends [mscorlib]System.ValueType
 {
   .pack 0
   .size 1
@@ -377,3 +377,4 @@
 
 } // end of class Demo1.StructTest
 
+Time elapsed: 00:00:00.1647888

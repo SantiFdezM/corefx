@@ -14,7 +14,7 @@ namespace ILDasmLibrary.Decoder
     public struct ILTypeProvider : ISignatureTypeProvider<ILType>
     {
         private readonly MetadataReader _reader;
-        
+
 #if PREFIX
         public SignatureTypeCode TypeCode { get; set; }
 
@@ -25,6 +25,9 @@ namespace ILDasmLibrary.Decoder
                 return true;
             }
         }
+#else
+        private bool _isValueType;
+        private bool _isClass;
 #endif
 
         public MetadataReader Reader
@@ -38,7 +41,12 @@ namespace ILDasmLibrary.Decoder
         public ILTypeProvider(MetadataReader reader)
         {
             _reader = reader;
+#if PREFIX
             TypeCode = SignatureTypeCode.Invalid;
+#else
+            _isClass = false;
+            _isValueType = false;
+#endif
         }
 
 #region Public APIs
@@ -217,10 +225,17 @@ namespace ILDasmLibrary.Decoder
 
         public ILType GetTypeFromDefinition(TypeDefinitionHandle handle)
         {
+#if PREFIX
             bool isValueType = TypeCode == SignatureTypeCode.ValueType;
             bool isClass = TypeCode == SignatureTypeCode.Class;
             TypeCode = SignatureTypeCode.Invalid;
             return new ILType(GetFullName(Reader.GetTypeDefinition(handle)),isValueType, isClass);
+#else
+            ILType type = new ILType(GetFullName(Reader.GetTypeDefinition(handle)), _isValueType, _isClass);
+            _isValueType = false;
+            _isClass = false;
+            return type;
+#endif
         }
 
         public ILType GetTypeFromReference(TypeReferenceHandle handle)
@@ -329,18 +344,19 @@ namespace ILDasmLibrary.Decoder
 
                 if(declaringName == "System.ValueType")
                 {
-                    TypeCode = SignatureTypeCode.ValueType;
+                    _isValueType = true;
+                    _isClass = false;
                 }
 
-                if(declaringName == "System.Object")
+                if(declaringName == "System.Object" && !_isValueType)
                 {
-                    TypeCode = SignatureTypeCode.Class;
+                    _isClass = false;
                 }
             }
 
             else //interfaces indirectly inherit from System.Object
             {
-                TypeCode = SignatureTypeCode.Class;
+                _isClass = true;
             }
 
             if (type.Namespace.IsNil)
