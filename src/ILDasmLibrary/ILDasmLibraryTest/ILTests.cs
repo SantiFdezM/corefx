@@ -15,7 +15,7 @@ namespace ILDasmLibraryTest
             Stopwatch watch = new Stopwatch();
             try
             {
-                string path = "Assemblies/Demo1.exe";
+                string path = "Assemblies/mscorlib.dll";
                 if (!File.Exists(path))
                 {
                     Assert.Fail("File not found");

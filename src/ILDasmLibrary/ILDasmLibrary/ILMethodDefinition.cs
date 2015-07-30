@@ -140,7 +140,7 @@ namespace ILDasmLibrary
         /// <summary>
         /// Method Token.
         /// </summary>
-        public int Token
+        internal int Token
         {
             get
             {
@@ -186,6 +186,14 @@ namespace ILDasmLibrary
             }
         }
 
+        public bool HasImport
+        {
+            get
+            {
+                return Attributes.HasFlag(MethodAttributes.PinvokeImpl);
+            }
+        }
+
         public ILMethodImport Import
         {
             get
@@ -193,7 +201,7 @@ namespace ILDasmLibrary
                 if (!_isImportInitialized)
                 {
                     _isImportInitialized = true;
-                    _import = ILMethodImport.Create(_methodDefinition.GetImport(), ref _readers);
+                    _import = ILMethodImport.Create(_methodDefinition.GetImport(), ref _readers, _methodDefinition);
                 }
                 return _import;
             }
@@ -523,7 +531,9 @@ namespace ILDasmLibrary
             }
             if (Attributes.HasFlag(MethodAttributes.PinvokeImpl))
             {
-                sb.Append("pinvokeimpl ");
+                sb.Append("pinvokeimpl(");
+                sb.Append(Import.GetMethodImportDeclaration());
+                sb.Append(") ");
             }
             return sb.ToString();
         }
