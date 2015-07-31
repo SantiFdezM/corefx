@@ -311,7 +311,7 @@ namespace ILDasmLibrary.Decoder
             return locals;
         }
 
-        internal static ILParameter[] DecodeParameters(MethodSignature<ILType> signature, ParameterHandleCollection parameters, MetadataReader mdReader)
+        internal static ILParameter[] DecodeParameters(MethodSignature<ILType> signature, ParameterHandleCollection parameters, ref Readers readers)
         {
             var types = signature.ParameterTypes;
             int requiredCount = Math.Min(signature.RequiredParameterCount, types.Length);
@@ -322,11 +322,8 @@ namespace ILDasmLibrary.Decoder
             ILParameter[] result = new ILParameter[requiredCount];
             for (int i = 0; i < requiredCount; i++)
             {
-                var parameter = mdReader.GetParameter(parameters.ElementAt(i));
-                bool isOptional = parameter.Attributes.HasFlag(ParameterAttributes.Optional);
-                var parameterName = mdReader.GetString(parameter.Name);
-                parameterName = ILDecoderHelpers.Instance.NormalizeString(parameterName);
-                result[i] = new ILParameter(parameterName, types[i].ToString(), isOptional);
+                var parameter = readers.MdReader.GetParameter(parameters.ElementAt(i));
+                result[i] = ILParameter.Create(parameter, ref readers, types[i].ToString());
             }
             return result;
         }

@@ -595,6 +595,13 @@ namespace ILDasmLibrary.Visitor
             {
                 return;
             }
+            
+            foreach(var parameter in methodDefinition.GetOptionalParameters())
+            {
+                WriteIndentation();
+                _writer.Write(".param ");
+                _writer.WriteLine(string.Format("[{0}] = {1}", parameter.SequenceNumber, parameter.DefaultValue.GetValueString()));
+            }
 
             if (methodDefinition.IsImplementation)
             {

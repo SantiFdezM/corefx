@@ -1,19 +1,33 @@
-﻿namespace ILDasmLibrary
+﻿using System.Reflection;
+using System.Reflection.Metadata;
+
+namespace ILDasmLibrary
 {
     /// <summary>
     /// Struct that represents a parameter object.
     /// </summary>
     public struct ILParameter
     {
-        private readonly string _name;
-        private readonly string _type;
-        private readonly bool _isOptional;
+        private Parameter _parameter;
+        private Readers _readers;
+        private string _name;
+        private string _type;
+        private int _sequenceNumber;
+        private ParameterAttributes _attributes;
+        private bool _isAttributesInitialized;
+        private bool _isDefaultValueInitialized;
+        private ILConstant _defaultValue;
 
-        public ILParameter(string name, string type, bool optional)
+        internal static ILParameter Create(Parameter parameter, ref Readers readers, string type)
         {
-            _name = name;
-            _type = type;
-            _isOptional = optional;
+            ILParameter param = new ILParameter();
+            param._type = type;
+            param._readers = readers;
+            param._parameter = parameter;
+            param._sequenceNumber = -1;
+            param._isAttributesInitialized = false;
+            param._isDefaultValueInitialized = false;
+            return param;
         }
 
         /// <summary>
@@ -23,6 +37,10 @@
         {
             get
             {
+                if(_name == null)
+                {
+                    _name = ILDecoderHelpers.Instance.NormalizeString(_readers.MdReader.GetString(_parameter.Name));
+                }
                 return _name;
             }
         }
@@ -38,15 +56,102 @@
             }
         }
 
-        /// <summary>
-        /// Property that indicates whether the parameter is optional or not.
-        /// </summary>
+        public ILConstant DefaultValue
+        {
+            get
+            {
+                if(!_isDefaultValueInitialized)
+                {
+                    _isDefaultValueInitialized = true;
+                    _defaultValue = GetDefaultValue();
+                }
+                return _defaultValue;
+            }
+        }
+
+        public int SequenceNumber
+        {
+            get
+            {
+                if(_sequenceNumber == -1)
+                {
+                    _sequenceNumber = _parameter.SequenceNumber;
+                }
+                return _sequenceNumber;
+            }
+        }
+
+        public ParameterAttributes Attributes
+        {
+            get
+            {
+                if (!_isAttributesInitialized)
+                {
+                    _isAttributesInitialized = true;
+                    _attributes = _parameter.Attributes;
+                }
+                return _attributes;
+            }
+        }
+
+        public bool HasDefault
+        {
+            get
+            {
+                return Attributes.HasFlag(ParameterAttributes.HasDefault);
+            }
+        }
+
         public bool IsOptional
         {
             get
             {
-                return _isOptional;
+                return Attributes.HasFlag(ParameterAttributes.Optional);
             }
+        }
+
+        public string GetParameterSignature()
+        {
+            return string.Format("{0}{1} {2}{3}", GetFlags(), Type, GetMarshalAttributes(), Name);
+        }
+
+        private string GetMarshalAttributes()
+        {
+            return string.Empty;
+            // TO DO.
+            //Need a Marshalling decoder because marshalling descriptor types have diferent specifications.
+            //if (!Attributes.HasFlag(ParameterAttributes.HasFieldMarshal))
+            //    return string.Empty;
+            //StringBuilder sb = new StringBuilder();
+            //BlobReader reader = _readers.MdReader.GetBlobReader(_parameter.GetMarshallingDescriptor());
+            //var type = SignatureDecoder.DecodeType(ref reader, _readers.Provider);
+            //sb.Append("marshal(");
+            //sb.Append(type);
+            //sb.Append(") ");
+            //return sb.ToString();
+        }
+
+        private string GetFlags()
+        {
+            if (Attributes.HasFlag(ParameterAttributes.Optional))
+            {
+                return "[opt] ";
+            }
+            if (Attributes.HasFlag(ParameterAttributes.Out))
+            {
+                return "[out] ";
+            }
+            if (Attributes.HasFlag(ParameterAttributes.In))
+            {
+                return "[in] ";
+            }
+            return string.Empty;
+        }
+
+        private ILConstant GetDefaultValue()
+        {
+            Constant value = _readers.MdReader.GetConstant(_parameter.GetDefaultValue());
+            return ILConstant.Create(value, ref _readers);
         }
     }
 }

@@ -339,7 +339,7 @@ namespace ILDasmLibrary
             {
                 if (_parameters == null)
                 {
-                    _parameters = ILDecoder.DecodeParameters(Signature, _methodDefinition.GetParameters(), _readers.MdReader);
+                    _parameters = ILDecoder.DecodeParameters(Signature, _methodDefinition.GetParameters(), ref _readers);
                 }
                 return _parameters;
             }
@@ -442,6 +442,17 @@ namespace ILDasmLibrary
         #endregion
 
         #region Private Methods
+        internal IEnumerable<ILParameter> GetOptionalParameters()
+        {
+            for(int i = 0; i<Parameters.Length; i++)
+            {
+                var parameter = Parameters[i];
+                if (parameter.IsOptional && parameter.HasDefault)
+                {
+                    yield return parameter;
+                }
+            }
+        }
         private string GetGenericParametersString()
         {
             int i = 0;
@@ -473,7 +484,7 @@ namespace ILDasmLibrary
                 {
                     sb.Append(", ");
                 }
-                sb.AppendFormat("{0} {1}", Parameters[i].Type.ToString(), Parameters[i].Name);
+                sb.Append(Parameters[i].GetParameterSignature());
             }
             sb.Append(")");
             return sb.ToString();
