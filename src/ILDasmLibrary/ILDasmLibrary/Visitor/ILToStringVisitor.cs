@@ -226,7 +226,18 @@ namespace ILDasmLibrary.Visitor
             {
                 _writer.Write(string.Format("/* {0} */ ", field.Token.ToString("X8")));
             }
-            _writer.WriteLine(field.Signature);
+            _writer.Write(field.Signature);
+
+            if (field.HasDefault)
+            {
+                _writer.Write(string.Format(" = {0}",field.DefaultValue.GetValueString()));
+            }
+            _writer.WriteLine();
+
+            foreach(var attribute in field.CustomAttributes)
+            {
+                attribute.Accept(this);
+            }
         }
 
         public void Visit(ILLocal local)

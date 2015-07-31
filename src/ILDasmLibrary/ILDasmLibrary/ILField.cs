@@ -5,28 +5,32 @@ using System.Reflection.Metadata.Decoding;
 using System;
 using System.Text;
 using ILDasmLibrary.Visitor;
+using System.Collections.Generic;
 
 namespace ILDasmLibrary
 {
     public struct ILField : IVisitable
     {
-        private readonly FieldDefinition _fieldDefinition;
-        private readonly ILTypeDefinition _typeDefinition;
+        private FieldDefinition _fieldDefinition;
+        private ILTypeDefinition _typeDefinition;
+        private ILConstant _defaultValue;
+        private IEnumerable<ILCustomAttribute> _customAttributes;
         private Readers _readers;
         private string _name;
         private string _type;
         private string _signature;
         private int _token;
+        private bool _isDefaultInitialized;
 
-        internal ILField(FieldDefinition fieldDefinition, int token, ref Readers readers, ILTypeDefinition typeDefinition)
+        internal static ILField Create(FieldDefinition fieldDefinition, int token, ref Readers readers, ILTypeDefinition typeDefinition)
         {
-            _fieldDefinition = fieldDefinition;
-            _token = token;
-            _name = null;
-            _type = null;
-            _signature = null;
-            _readers = readers;
-            _typeDefinition = typeDefinition;
+            ILField field = new ILField();
+            field._fieldDefinition = fieldDefinition;
+            field._token = token;
+            field._readers = readers;
+            field._typeDefinition = typeDefinition;
+            field._isDefaultInitialized = false;
+            return field;
         }
 
         public string Name
@@ -69,11 +73,40 @@ namespace ILDasmLibrary
             }
         }
 
+        public ILConstant DefaultValue
+        {
+            get
+            {
+                if (!HasDefault)
+                {
+                    throw new InvalidOperationException("Field doesn't have default value");
+                }
+                if (!_isDefaultInitialized)
+                {
+                    _isDefaultInitialized = true;
+                    _defaultValue = GetDefault();
+                }
+                return _defaultValue;
+            }
+        }
+
         public bool HasDefault
         {
             get
             {
                 return Attributes.HasFlag(FieldAttributes.HasDefault);
+            }
+        }
+
+        public IEnumerable<ILCustomAttribute> CustomAttributes
+        {
+            get
+            {
+                if(_customAttributes == null)
+                {
+                    _customAttributes = GetCustomAttributes();
+                }
+                return _customAttributes;
             }
         }
 
@@ -90,9 +123,25 @@ namespace ILDasmLibrary
             }
         }
 
+        private IEnumerable<ILCustomAttribute> GetCustomAttributes()
+        {
+            var handles = _fieldDefinition.GetCustomAttributes();
+            foreach(var handle in handles)
+            {
+                var attribute = _readers.MdReader.GetCustomAttribute(handle);
+                yield return new ILCustomAttribute(attribute, ref _readers);
+            }
+        }
+
         private string GetSignature()
         {
             return string.Format("{0}{1} {2}{3} {4}", GetAccessibilityFlags(), GetContractFlags(), GetMarshalAttributes(), Type ,Name);
+        }
+
+        private ILConstant GetDefault()
+        {
+            Constant value = _readers.MdReader.GetConstant(_fieldDefinition.GetDefaultValue());
+            return ILConstant.Create(value, ref _readers);
         }
 
         private string GetMarshalAttributes()

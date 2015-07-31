@@ -315,7 +315,7 @@ namespace ILDasmLibrary
             {
                 var field = _readers.MdReader.GetFieldDefinition(handle);
                 var token = MetadataTokens.GetToken(handle);
-                yield return new ILField(field, token, ref _readers, this);
+                yield return ILField.Create(field, token, ref _readers, this);
             }
         }
         private IEnumerable<ILTypeDefinition> GetNestedTypes()

@@ -51,6 +51,7 @@
     <Compile Include="Decoder\ILTypeProvider.cs" />
     <Compile Include="ILAssembly.cs" />
     <Compile Include="ILAssemblyReference.cs" />
+    <Compile Include="ILConstant.cs" />
     <Compile Include="ILCustomAttribute.cs" />
     <Compile Include="ILEntity.cs" />
     <Compile Include="ILEventDefinition.cs" />

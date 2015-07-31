@@ -15,7 +15,7 @@ namespace ILDasmLibrary
         private bool _isTypeInitialized;
         private object _value;
 
-        internal ILConstant Create(Constant constant, ref Readers readers)
+        internal static ILConstant Create(Constant constant, ref Readers readers)
         {
             ILConstant ilConstant = new ILConstant();
             ilConstant._constant = constant;
@@ -52,35 +52,35 @@ namespace ILDasmLibrary
         public string GetValueString()
         {
             BlobReader reader = _readers.MdReader.GetBlobReader(_constant.Value);
-
+            object value = Value;
             switch (TypeCode)
             {
                 case ConstantTypeCode.Byte:
-                    return string.Format("uint8({0})", reader.ReadByte().ToString("X2"));
+                    return string.Format("uint8(0x{0})", ((byte)value).ToString("X2"));
                 case ConstantTypeCode.Boolean:
-                    return string.Format("bool({0})", reader.ReadBoolean().ToString());
+                    return string.Format("bool({0})", ((bool)value).ToString());
                 case ConstantTypeCode.Char:
-                    return string.Format("char({0})", reader.ReadChar());
+                    return string.Format("char(0x{0})", ((int)(char)value).ToString("X4"));
                 case ConstantTypeCode.SByte:
-                    return string.Format("int8({0})", reader.ReadSByte());
+                    return string.Format("int8(0x{0})", ((sbyte)value).ToString("X2"));
                 case ConstantTypeCode.Int16:
-                    return string.Format("int16({0})", reader.ReadInt16().ToString());
+                    return string.Format("int16(0x{0})", ((short)value).ToString("X4"));
                 case ConstantTypeCode.Int32:
-                    return string.Format("int32({0})", reader.ReadInt32().ToString());
+                    return string.Format("int32(0x{0})", ((int)value).ToString("X8"));
                 case ConstantTypeCode.Int64:
-                    return string.Format("int64({0})", reader.ReadInt64().ToString());
+                    return string.Format("int64(0x{0:x})", (long)value);
                 case ConstantTypeCode.Single:
-                    return GetFloatString(reader.ReadSingle());
+                    return GetFloatString((float)value);
                 case ConstantTypeCode.Double:
-                    return GetDoubleString(reader.ReadDouble());
+                    return GetDoubleString((double)value);
                 case ConstantTypeCode.String:
-                    return string.Format("char*(\"{0}\")",reader.ReadSerializedString());
+                    return string.Format("\"{0}\"", value);
                 case ConstantTypeCode.UInt16:
-                    return string.Format("uint16({0})", reader.ReadUInt16().ToString());
+                    return string.Format("uint16(0x{0})", ((ushort)value).ToString("X4"));
                 case ConstantTypeCode.UInt32:
-                    return string.Format("uint32({0})", reader.ReadUInt32().ToString());
+                    return string.Format("uint32(0x{0})", ((uint)value).ToString("X8"));
                 case ConstantTypeCode.UInt64:
-                    return string.Format("uint64({0})", reader.ReadUInt64().ToString());
+                    return string.Format("uint64(0x{0:x})", (ulong)value);
                 case ConstantTypeCode.NullReference:
                     return "nullref";
                 default:
@@ -102,6 +102,16 @@ namespace ILDasmLibrary
                 }
                 return string.Format("float32({0})", sb.ToString());
             }
+
+            if (single == 0.0)
+            {
+                var bytes = BitConverter.GetBytes(single);
+                if (bytes[bytes.Length - 1] == 128)
+                {
+                    return "float32(-0.0)";
+                }
+                return "float32(0.0)";
+            }
             return string.Format("float32({0})", single.ToString());
         }
 
@@ -118,46 +128,24 @@ namespace ILDasmLibrary
                 }
                 return string.Format("float64({0})", sb.ToString());
             }
+
+            if (number == 0.0)
+            {
+                var bytes = BitConverter.GetBytes(number);
+                if (bytes[bytes.Length - 1] == 128)
+                {
+                    return "float64(-0.0)";
+                }
+                return "float64(0.0)";
+            }
+
             return string.Format("float64({0})", number.ToString());
         }
 
         private object GetValue()
         {
             BlobReader reader = _readers.MdReader.GetBlobReader(_constant.Value);
-
-            switch (TypeCode)
-            {
-                case ConstantTypeCode.Byte:
-                    return reader.ReadByte();
-                case ConstantTypeCode.Boolean:
-                    return reader.ReadBoolean();
-                case ConstantTypeCode.Char:
-                    return reader.ReadChar();
-                case ConstantTypeCode.SByte:
-                    return reader.ReadSByte();
-                case ConstantTypeCode.Int16:
-                    return reader.ReadInt16();
-                case ConstantTypeCode.Int32:
-                    return reader.ReadInt32();
-                case ConstantTypeCode.Int64:
-                    return reader.ReadInt64();
-                case ConstantTypeCode.Single:
-                    return reader.ReadSingle();
-                case ConstantTypeCode.Double:
-                    return reader.ReadDouble();
-                case ConstantTypeCode.String:
-                    return reader.ReadSerializedString();
-                case ConstantTypeCode.UInt16:
-                    return reader.ReadUInt16();
-                case ConstantTypeCode.UInt32:
-                    return reader.ReadUInt32();
-                case ConstantTypeCode.UInt64:
-                    return reader.ReadUInt64();
-                case ConstantTypeCode.NullReference:
-                    return null;
-                default:
-                    throw new BadImageFormatException("Invalid Constant Type Code");
-            }
+            return reader.ReadConstant(TypeCode);
         }
 
     }
