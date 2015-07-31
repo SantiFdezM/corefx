@@ -280,7 +280,7 @@ namespace ILDasmLibrary.Visitor
                 WriteBytes(instruction.Bytes, instruction);
             }
             _writer.Write(string.Format("{0,-11}", instruction.opCode));
-            if (float.IsNaN(instruction.Value))
+            if (float.IsNaN(instruction.Value) || float.IsInfinity(instruction.Value))
             {
                 var data = BitConverter.GetBytes(instruction.Value);
                 _writer.Write("(");
@@ -439,7 +439,7 @@ namespace ILDasmLibrary.Visitor
                 WriteBytes(instruction.Bytes, instruction);
             }
             _writer.Write(string.Format("{0,-11}", instruction.opCode));
-            if (double.IsNaN(instruction.Value))
+            if (double.IsNaN(instruction.Value) || double.IsInfinity(instruction.Value))
             {
                 var data = BitConverter.GetBytes(instruction.Value);
                 _writer.Write("(");
