@@ -58,7 +58,7 @@ namespace ILDasmLibrary
                 case ConstantTypeCode.Byte:
                     return string.Format("uint8(0x{0})", ((byte)value).ToString("X2"));
                 case ConstantTypeCode.Boolean:
-                    return string.Format("bool({0})", ((bool)value).ToString());
+                    return string.Format("bool({0})", ((bool)value) ? "true" : "false");
                 case ConstantTypeCode.Char:
                     return string.Format("char(0x{0})", ((int)(char)value).ToString("X4"));
                 case ConstantTypeCode.SByte:
