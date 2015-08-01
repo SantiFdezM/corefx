@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using System.Reflection.Metadata;
 
 namespace ILDasmLibrary
@@ -62,6 +63,10 @@ namespace ILDasmLibrary
             {
                 if(!_isDefaultValueInitialized)
                 {
+                    if (!HasDefault)
+                    {
+                        throw new InvalidOperationException("Parameter doesn't have default value");
+                    }
                     _isDefaultValueInitialized = true;
                     _defaultValue = GetDefaultValue();
                 }

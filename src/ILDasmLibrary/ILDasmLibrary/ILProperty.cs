@@ -18,6 +18,8 @@ namespace ILDasmLibrary
         private IEnumerable<ILCustomAttribute> _customAttributes;
         private ILMethodDefinition _getter;
         private ILMethodDefinition _setter;
+        private ILConstant _defaultValue;
+        private bool _isDefaultValueInitialized;
         private bool _isGetterInitialized;
         private bool _isSetterInitialized;
         private PropertyAccessors _accessors;
@@ -32,6 +34,7 @@ namespace ILDasmLibrary
             property._propertyDef = propertyDef;
             property._readers = readers;
             property._isSignatureInitialized = false;
+            property._isDefaultValueInitialized = false;
             property._isGetterInitialized = false;
             property._isSetterInitialized = false;
             property._token = token;
@@ -84,6 +87,23 @@ namespace ILDasmLibrary
             get
             {
                 return Attributes.HasFlag(PropertyAttributes.HasDefault);
+            }
+        }
+
+        public ILConstant DefaultValue
+        {
+            get
+            {
+                if (!_isDefaultValueInitialized)
+                {
+                    if (!HasDefault)
+                    {
+                        throw new InvalidOperationException("Property doesn't have default value");
+                    }
+                    _isDefaultValueInitialized = true;
+                    _defaultValue = GetDefaultValue();
+                }
+                return _defaultValue;
             }
         }
 
@@ -189,6 +209,12 @@ namespace ILDasmLibrary
                 return "rtspecialname ";
             }
             return string.Empty;
+        }
+
+        private ILConstant GetDefaultValue()
+        {
+            Constant constant = _readers.MdReader.GetConstant(_propertyDef.GetDefaultValue());
+            return ILConstant.Create(constant, ref _readers);
         }
 
     }

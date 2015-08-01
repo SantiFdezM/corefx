@@ -795,6 +795,11 @@ namespace ILDasmLibrary.Visitor
             if (_options.ShowBytes)
                 _writer.Write("/* {0} */ ", property.Token.ToString("X8"));
             _writer.WriteLine(property.GetDecodedSignature());
+            if (property.HasDefault)
+            {
+                WriteIndentation();
+                _writer.WriteLine(string.Format(" = {0}", property.DefaultValue.GetValueString()));
+            }
         }
 
         private void WriteEntityType(ILEntity type)
