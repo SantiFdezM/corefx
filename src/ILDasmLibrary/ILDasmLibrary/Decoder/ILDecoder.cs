@@ -554,7 +554,7 @@ namespace ILDasmLibrary.Decoder
 
         private static string GetString(MetadataReader mdReader, StringHandle handle)
         {
-            return ILDecoderHelpers.Instance.NormalizeString(mdReader.GetString(handle));
+            return ILDecoderHelpers.Instance.QuoteString(mdReader.GetString(handle));
         }
 
         internal static string DecodeOverridenMethodName(MetadataReader mdReader, int token, ILTypeProvider provider)
@@ -573,7 +573,7 @@ namespace ILDasmLibrary.Decoder
             {
                 return storage;
             }
-            storage = _readers.MdReader.GetString(value);
+            storage = ILDecoderHelpers.Instance.QuoteString(_readers.MdReader.GetString(value));
             return storage;
         }
 

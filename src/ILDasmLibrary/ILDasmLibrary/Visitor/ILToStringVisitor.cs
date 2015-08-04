@@ -139,6 +139,10 @@ namespace ILDasmLibrary.Visitor
             _writer.Write(".class ");
             if (_options.ShowBytes)
                 _writer.Write("/* {0} */ ", typeDefinition.Token.ToString("X8"));
+
+            _writer.Write(typeDefinition.GetDecodedFlags());
+            _writer.Write(" ");
+
             if (typeDefinition.IsNested)
             {
                 _writer.Write(typeDefinition.Name);
@@ -147,6 +151,7 @@ namespace ILDasmLibrary.Visitor
             {
                 _writer.Write(typeDefinition.FullName);
             }
+
             if (typeDefinition.HasBaseType)
             {
                 _writer.Write(" extends ");

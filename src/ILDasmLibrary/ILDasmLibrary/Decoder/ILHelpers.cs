@@ -70,6 +70,12 @@ namespace ILDasmLibrary
             }
         }
 
+        internal string QuoteString(string str)
+        {
+            if (str == ".ctor" || str == ".cctor") return str;
+            return string.Format("'{0}'", str);
+        }
+
         internal string NormalizeString(string str)
         {
             if (str == ".ctor" || str == ".cctor") return str;

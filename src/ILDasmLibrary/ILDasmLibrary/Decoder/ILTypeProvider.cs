@@ -295,18 +295,18 @@ namespace ILDasmLibrary.Decoder
         {
             if (reference.Namespace.IsNil)
             {
-                return Reader.GetString(reference.Name);
+                return ILDecoderHelpers.Instance.QuoteString(Reader.GetString(reference.Name));
             }
-            return String.Format("{0}.{1}", Reader.GetString(reference.Namespace), Reader.GetString(reference.Name));
+            return String.Format("'{0}'.'{1}'", Reader.GetString(reference.Namespace), Reader.GetString(reference.Name));
         }
 
         private string GetName(TypeDefinition type)
         {
             if (type.Namespace.IsNil)
             {
-                return Reader.GetString(type.Name);
+                return ILDecoderHelpers.Instance.QuoteString(Reader.GetString(type.Name));
             }
-            return String.Format("{0}.{1}", Reader.GetString(type.Namespace), Reader.GetString(type.Name));
+            return String.Format("'{0}'.'{1}'", Reader.GetString(type.Namespace), Reader.GetString(type.Name));
         }
 
         private string GetFullName(TypeDefinitionHandle handle)

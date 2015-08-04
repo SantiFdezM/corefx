@@ -7,6 +7,7 @@ using System.Reflection.Metadata.Ecma335;
 using System;
 using System.Reflection;
 using ILDasmLibrary.Visitor;
+using System.Text;
 
 namespace ILDasmLibrary
 {
@@ -33,7 +34,9 @@ namespace ILDasmLibrary
         private ILEntity _baseType;
         private bool _isBaseTypeInitialized;
         private bool _isLayoutInitialized;
+        private bool _isAttributesInitialized;
         private string _signature;
+        private TypeAttributes _attributes;
 
         internal static ILTypeDefinition Create(TypeDefinition typeDef, ref Readers readers, int token)
         {
@@ -43,6 +46,7 @@ namespace ILDasmLibrary
             type._readers = readers;
             type._isBaseTypeInitialized = false;
             type._isLayoutInitialized = false;
+            type._isAttributesInitialized = false;
             return type;
         }
 
@@ -147,7 +151,12 @@ namespace ILDasmLibrary
         {
             get
             {
-                return _typeDefinition.Attributes;
+                if (!_isAttributesInitialized)
+                {
+                    _isAttributesInitialized = true;
+                    _attributes = _typeDefinition.Attributes;
+                }
+                return _attributes;
             }
         }
 
@@ -269,6 +278,139 @@ namespace ILDasmLibrary
             int result = 0;
             MethodImplementationDictionary.TryGetValue(methodBodyToken, out result);
             return result;
+        }
+
+        public string GetDecodedFlags()
+        {
+            return string.Format("{0} {1} {2} {3}{4}", GetVisibilityFlags(), GetTypeLayoutFlags(), GetInteroperationFlags(), 
+                GetTypeSemanticsFlags(), GetSpecialHandlingFlags());
+        }
+
+        private string GetSpecialHandlingFlags()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            if (Attributes.HasFlag(TypeAttributes.Import))
+            {
+                sb.Append("import ");
+            }
+
+            if (Attributes.HasFlag(TypeAttributes.Serializable))
+            {
+                sb.Append("serializable ");
+            }
+
+            if (Attributes.HasFlag(TypeAttributes.BeforeFieldInit))
+            {
+                sb.Append("beforefieldinit ");
+            }
+
+            if (Attributes.HasFlag(TypeAttributes.SpecialName))
+            {
+                sb.Append("specialname ");
+
+                if (Attributes.HasFlag(TypeAttributes.RTSpecialName))
+                {
+                    sb.Append("rtspecialname ");
+                }
+            }
+
+            if (sb.Length > 0)
+            {
+                sb.Length--; // remove trailing space.
+            }
+
+            return sb.ToString();
+        }
+
+        private string GetInteroperationFlags()
+        {
+            if (Attributes.HasFlag(TypeAttributes.AutoClass))
+            {
+                return "autochar";
+            }
+
+            if (Attributes.HasFlag(TypeAttributes.UnicodeClass))
+            {
+                return "unicode";
+            }
+
+            return "ansi";
+        }
+
+        private string GetTypeSemanticsFlags()
+        {
+            if (Attributes.HasFlag(TypeAttributes.Sealed))
+            {
+                return "sealed ";
+            }
+
+            if (Attributes.HasFlag(TypeAttributes.Abstract))
+            {
+                return "abstract ";
+            }
+
+            if (Attributes.HasFlag(TypeAttributes.Interface))
+            {
+                return "interface ";
+            }
+
+            return string.Empty;
+        }
+
+        private string GetTypeLayoutFlags()
+        {
+            if (Attributes.HasFlag(TypeAttributes.ExplicitLayout))
+            {
+                return "explicit";
+            }
+
+            if (Attributes.HasFlag(TypeAttributes.SequentialLayout))
+            {
+                return "sequential";
+            }
+
+            return "auto";
+        }
+
+        private string GetVisibilityFlags()
+        {
+            if (Attributes.HasFlag(TypeAttributes.NestedFamORAssem))
+            {
+                return "nested famorassem";
+            }
+
+            if (Attributes.HasFlag(TypeAttributes.NestedFamANDAssem))
+            {
+                return "nested famandassem";
+            }
+
+            if (Attributes.HasFlag(TypeAttributes.NestedAssembly))
+            {
+                return "nested assembly";
+            }
+
+            if (Attributes.HasFlag(TypeAttributes.NestedFamily))
+            {
+                return "nested family";
+            }
+
+            if (Attributes.HasFlag(TypeAttributes.NestedPrivate))
+            {
+                return "nested private";
+            }
+
+            if (Attributes.HasFlag(TypeAttributes.NestedPublic))
+            {
+                return "nested public";
+            }
+
+            if (Attributes.HasFlag(TypeAttributes.Public))
+            {
+                return "public";
+            }
+
+            return "private";
         }
 
         public void Accept(IVisitor visitor)
