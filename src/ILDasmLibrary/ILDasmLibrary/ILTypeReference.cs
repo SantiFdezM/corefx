@@ -47,7 +47,7 @@ namespace ILDasmLibrary
             {
                 if(_fullName == null)
                 {
-                    _fullName = SignatureDecoder.DecodeType(MetadataTokens.TypeReferenceHandle(_token), _readers.Provider).ToString(false);
+                    _fullName = SignatureDecoder.DecodeType(MetadataTokens.TypeReferenceHandle(_token), _readers.Provider, null).ToString(false);
                 }
                 return _fullName;
             }

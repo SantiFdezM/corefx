@@ -340,7 +340,7 @@ namespace ILDasmLibrary.Decoder
 
         internal static ILType DecodeType(EntityHandle type, ILTypeProvider provider)
         {
-            return SignatureDecoder.DecodeType(type, provider);
+            return SignatureDecoder.DecodeType(type, provider, null);
         }
 
         private static string GetSignature(MetadataReader mdReader, int intOperand, ILTypeProvider provider)
@@ -387,15 +387,15 @@ namespace ILDasmLibrary.Decoder
             if(IsTypeReference(intOperand))
             {
                 var refHandle = MetadataTokens.TypeReferenceHandle(intOperand);
-                return SignatureDecoder.DecodeType(refHandle, provider).ToString();
+                return SignatureDecoder.DecodeType(refHandle, provider, null).ToString();
             }
             if (IsTypeSpecification(intOperand))
             {
                 var typeHandle = MetadataTokens.TypeSpecificationHandle(intOperand);
-                return SignatureDecoder.DecodeType(typeHandle, provider).ToString();
+                return SignatureDecoder.DecodeType(typeHandle, provider, null).ToString();
             }
             var defHandle = MetadataTokens.TypeDefinitionHandle(intOperand);
-            return SignatureDecoder.DecodeType(defHandle, provider).ToString();
+            return SignatureDecoder.DecodeType(defHandle, provider, null).ToString();
         }
 
         private static ILInstruction CreateSwitchInstruction(ref BlobReader ilReader, int expectedSize, int ilOffset, OpCode opCode)
@@ -472,12 +472,12 @@ namespace ILDasmLibrary.Decoder
             {
                 var typeSpecificationHandle = MetadataTokens.TypeSpecificationHandle(parentToken);
                 var typeSpecification = mdReader.GetTypeSpecification(typeSpecificationHandle);
-                type = SignatureDecoder.DecodeType(typeSpecificationHandle, provider).ToString();
+                type = SignatureDecoder.DecodeType(typeSpecificationHandle, provider, null).ToString();
             }
             else
             {
                 var parentHandle = MetadataTokens.TypeReferenceHandle(parentToken);
-                type = SignatureDecoder.DecodeType(parentHandle, provider).ToString(false);
+                type = SignatureDecoder.DecodeType(parentHandle, provider, null).ToString(false);
             }
             string signatureValue;
             string parameters = string.Empty;
@@ -512,7 +512,7 @@ namespace ILDasmLibrary.Decoder
             MethodSignature<ILType> signature = SignatureDecoder.DecodeMethodSignature(definition.Signature, provider);
             var returnType = GetMethodReturnType(signature);
             var parameters = provider.GetParameterList(signature);
-            var parentType = SignatureDecoder.DecodeType(parent, provider);
+            var parentType = SignatureDecoder.DecodeType(parent, provider, null);
             return string.Format("{0} {1}::{2}{3}{4}",returnType, parentType.ToString(false), GetString(mdReader, definition.Name), genericParameters, parameters);
         }
 
@@ -547,7 +547,7 @@ namespace ILDasmLibrary.Decoder
             var handle = MetadataTokens.FieldDefinitionHandle(intOperand);
             var definition = mdReader.GetFieldDefinition(handle);
             var typeHandle = definition.GetDeclaringType();
-            var typeSignature = SignatureDecoder.DecodeType(typeHandle, provider);
+            var typeSignature = SignatureDecoder.DecodeType(typeHandle, provider, null);
             var signature = SignatureDecoder.DecodeFieldSignature(definition.Signature, provider);
             return String.Format("{0} {1}::{2}", signature.ToString(), typeSignature.ToString(false), GetString(mdReader, definition.Name));
         }
@@ -563,7 +563,7 @@ namespace ILDasmLibrary.Decoder
             var definition = mdReader.GetMethodDefinition(handle);
             var parent = definition.GetDeclaringType();
             MethodSignature<ILType> signature = SignatureDecoder.DecodeMethodSignature(definition.Signature, provider);
-            var parentType = SignatureDecoder.DecodeType(parent, provider);
+            var parentType = SignatureDecoder.DecodeType(parent, provider, null);
             return string.Format("{0}::{1}", parentType.ToString(false), GetString(mdReader, definition.Name));
         }
 

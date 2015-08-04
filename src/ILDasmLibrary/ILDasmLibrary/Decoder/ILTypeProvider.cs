@@ -15,21 +15,6 @@ namespace ILDasmLibrary.Decoder
     {
         private readonly MetadataReader _reader;
 
-#if PREFIX
-        public SignatureTypeCode TypeCode { get; set; }
-
-        public bool NeedProjectedFlags
-        {
-            get
-            {
-                return true;
-            }
-        }
-#else
-        private bool _isValueType;
-        private bool _isClass;
-#endif
-
         public MetadataReader Reader
         {
             get
@@ -41,12 +26,6 @@ namespace ILDasmLibrary.Decoder
         public ILTypeProvider(MetadataReader reader)
         {
             _reader = reader;
-#if PREFIX
-            TypeCode = SignatureTypeCode.Invalid;
-#else
-            _isClass = false;
-            _isValueType = false;
-#endif
         }
 
 #region Public APIs
@@ -223,31 +202,32 @@ namespace ILDasmLibrary.Decoder
             return elementType;
         }
 
-        public ILType GetTypeFromDefinition(TypeDefinitionHandle handle)
+        public ILType GetTypeFromDefinition(TypeDefinitionHandle handle, bool? isValueType)
         {
-#if PREFIX
-            bool isValueType = TypeCode == SignatureTypeCode.ValueType;
-            bool isClass = TypeCode == SignatureTypeCode.Class;
-            TypeCode = SignatureTypeCode.Invalid;
-            return new ILType(GetFullName(Reader.GetTypeDefinition(handle)),isValueType, isClass);
-#else
+            bool _isClass = false;
+            bool _isValueType = false;
+
+            if(isValueType != null)
+            {
+                _isValueType = isValueType.Value;
+                _isClass = !isValueType.Value;
+            }
+
             ILType type = new ILType(GetFullName(Reader.GetTypeDefinition(handle)), _isValueType, _isClass);
-            _isValueType = false;
-            _isClass = false;
             return type;
-#endif
         }
 
-        public ILType GetTypeFromReference(TypeReferenceHandle handle)
+        public ILType GetTypeFromReference(TypeReferenceHandle handle, bool? isValueType)
         {
-            bool isClass = true; // adding class prefix to all type references.
-            bool isValueType = false;
-#if PREFIX
-            isValueType = TypeCode == SignatureTypeCode.ValueType;
-            isClass = TypeCode == SignatureTypeCode.Class;
-            TypeCode = SignatureTypeCode.Invalid;
-#endif
-            return new ILType(GetFullName(Reader.GetTypeReference(handle)), isValueType, isClass);
+            bool _isClass = false;
+            bool _isValueType = false;
+
+            if (isValueType != null)
+            {
+                _isValueType = isValueType.Value;
+                _isClass = !isValueType.Value;
+            }
+            return new ILType(GetFullName(Reader.GetTypeReference(handle)), _isValueType, _isClass);
         }
 
         public string GetParameterList(MethodSignature<ILType> signature, ParameterHandleCollection? parameters = null)
@@ -322,49 +302,11 @@ namespace ILDasmLibrary.Decoder
 
         private string GetName(TypeDefinition type)
         {
-#if PREFIX
             if (type.Namespace.IsNil)
             {
                 return Reader.GetString(type.Name);
             }
             return String.Format("{0}.{1}", Reader.GetString(type.Namespace), Reader.GetString(type.Name));
-#else
-            EntityHandle declaringType = type.BaseType;
-            string declaringName = string.Empty;
-            if (!declaringType.IsNil)
-            {
-                if(declaringType.Kind == HandleKind.TypeDefinition)
-                {
-                    declaringName = GetName(_reader.GetTypeDefinition((TypeDefinitionHandle)declaringType));
-                }
-                else if(declaringType.Kind == HandleKind.TypeReference)
-                {
-                    declaringName = GetName(_reader.GetTypeReference((TypeReferenceHandle)declaringType));
-                }
-
-                if(declaringName == "System.ValueType")
-                {
-                    _isValueType = true;
-                    _isClass = false;
-                }
-
-                if(declaringName == "System.Object" && !_isValueType)
-                {
-                    _isClass = false;
-                }
-            }
-
-            else //interfaces indirectly inherit from System.Object
-            {
-                _isClass = true;
-            }
-
-            if (type.Namespace.IsNil)
-            {
-                return Reader.GetString(type.Name);
-            }
-            return String.Format("{0}.{1}", Reader.GetString(type.Namespace), Reader.GetString(type.Name));
-#endif
         }
 
         private string GetFullName(TypeDefinitionHandle handle)

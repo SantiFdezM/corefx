@@ -37,7 +37,7 @@ namespace ILDasmLibrary
             {
                 if(_parent == null)
                 {
-                    SignatureDecoder.DecodeType(_attribute.Parent, _readers.Provider).ToString();
+                    SignatureDecoder.DecodeType(_attribute.Parent, _readers.Provider, null).ToString();
                 }
                 return _parent;
             }

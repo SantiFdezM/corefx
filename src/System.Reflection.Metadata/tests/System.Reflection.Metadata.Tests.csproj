@@ -30,12 +30,6 @@
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\System.Reflection.Metadata.csproj">
-      <Project>{f3e433c8-352f-4944-bf7f-765ce435370d}</Project>
-      <Name>System.Reflection.Metadata</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
@@ -92,6 +86,12 @@
     <EmbeddedResource Include="Resources\NetModule\ModuleCS01.mod" />
     <EmbeddedResource Include="Resources\NetModule\ModuleVB01.mod" />
     <None Include="Resources\NetModule\ModuleVB01.vb" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\src\System.Reflection.Metadata.csproj">
+      <Project>{f3e433c8-352f-4944-bf7f-765ce435370d}</Project>
+      <Name>System.Reflection.Metadata</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), dir.targets))\dir.targets" />
 </Project>

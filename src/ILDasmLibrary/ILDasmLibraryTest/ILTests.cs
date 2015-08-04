@@ -27,7 +27,7 @@ namespace ILDasmLibraryTest
                 {
                     assembly.WriteTo(file);
                     watch.Stop();
-                    file.WriteLine("Time elapsed: " + watch.Elapsed);
+                    file.WriteLine("//Time elapsed: " + watch.Elapsed);
                     assembly.Dispose();
                 }
             }

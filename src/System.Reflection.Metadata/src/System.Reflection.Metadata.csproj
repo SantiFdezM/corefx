@@ -213,24 +213,10 @@
     <Compile Include="System\Reflection\System.Reflection.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\MetadataResources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <SubType>Designer</SubType>
-      <LastGenOutput>MetadataResources.Designer.cs</LastGenOutput>
-      <CustomToolNamespace>System.Reflection.Metadata</CustomToolNamespace>
-    </EmbeddedResource>
-    <EmbeddedResource Include="System\Reflection\Metadata\Decoding\Strings.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-      <CustomToolNamespace>System.Reflection.Metadata.Decoding</CustomToolNamespace>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
     <None Include="project.json" />
   </ItemGroup>
-<ItemGroup>
+  <ItemGroup>
     <Reference Include="System.Collections.Immutable, Version=1.1.36.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <HintPath>$(PackagesDir)\System.Collections.Immutable.1.1.36\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
     </Reference>
