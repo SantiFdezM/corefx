@@ -187,6 +187,7 @@ namespace ILDasmLibrary.Visitor
             foreach (var method in typeDefinition.MethodDefinitions)
             {
                 method.Accept(this);
+                _writer.WriteLine("Token: " + method.Token);
             }
 
             foreach(var eventDef in typeDefinition.Events)
